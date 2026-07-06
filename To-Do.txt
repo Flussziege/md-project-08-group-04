@@ -1,0 +1,31 @@
+##P08 — Energy Minimization: Boiling Point of a LJ liquid
+
+The LJ potential can also be used to find energy-minimized configurations. 
+Once you have energy minimization implemented, you can generate starting structure for dense systems 
+and start to simulate liquid and solid states
+
+1. Implement energy minimization (e.g. steepest descent) based on the provided MD code
+    - Nachdem (zufällige, Boltzmannverteilte) Anfangstruktur generiert wurde
+    - Energie bzw. Potential des Systems minimieren
+        - Potential jedes Teilchens zu allen anderen bestimmen (eins ggf. fixieren)
+        - Summe der Potentiale -> Gradient
+        - Diese Gradienten minimieren
+        - Für jeden Schritt Daten speichern (txt?)
+        - bei ggb. Genauigkeit aufhören
+2. Monitor how the geometry changes during minimization
+    - potentielle Energie pro Schritt
+    - std pro Min-schritt 
+    - Fluktuation pro teilchen relativ zu end-konf
+    - dichte-Plot für Raum zur visualisierung
+    - Abstand von Zustand bei n zu end-zustand pro teilchen, pro schritt
+        - sollte gegen 0 gehen
+3. Use the minimized structures to initiate MD simulations of a LJ liquid (you may have to test different LJ parameters)
+    - NVT vs NVE ?
+    - sehr  hoher Wert für epsilon 
+        - Anziehung/energiegewinn sehr groß
+    - Zur Analyse: betrachte Dichte, tropfen-artige bereiche, Druck,
+4. Optional: can you estimate the boiling point of the LJ liquid
+    - reduzierte Temperatur umrechnen und daraus Werte für edelgase bestimmen ?
+
+Für den Vortrag:
+    - Periodic boundary verhindert simulation von Flüssigkeit
