@@ -20,7 +20,7 @@ and start to simulate liquid and solid states
     - Abstand von Zustand bei n zu end-zustand pro teilchen, pro schritt
         - sollte gegen 0 gehen
 3. Use the minimized structures to initiate MD simulations of a LJ liquid (you may have to test different LJ parameters)
-    - NVT vs NVE ?
+    - NVT vs NVE ?   ->NVT
     - sehr  hoher Wert für epsilon 
         - Anziehung/energiegewinn sehr groß
     - Zur Analyse: betrachte Dichte, tropfen-artige bereiche, Druck,
@@ -29,3 +29,9 @@ and start to simulate liquid and solid states
 
 Für den Vortrag:
     - Periodic boundary verhindert simulation von Flüssigkeit
+
+
+Größten Fragen:
+
+- NVT vs NVE   -> NVT
+- 

@@ -116,6 +116,8 @@ for i in range(n_particles):
 # set initial positions     
 initialize_positions(ps, sim.box_length)
 
+#EIGENE FUNKTION die das minimiert
+
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)
 
