@@ -1,0 +1,19 @@
+Im Terminal ausführen:
+
+pull mit:
+
+git pull
+
+
+
+Moritz:
+
+cd ~'.\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\'
+
+Um zu runnen 
+
+python .\LJ_gas_run_MD.py
+
+pushen mit
+
+git push -u origin main
