@@ -71,7 +71,7 @@ def minimise_starting_position(
     Fmax_hist(max_force_norm(ps.force))
 
 
-    while max_force_norm(ps.force) > tolerance: 
+    while max_force_norm(ps.force) >= tolerance: 
         # alpha bestimmen
         # position ändern
         # neue Kraft berechnen
@@ -90,6 +90,9 @@ def minimise_starting_position(
         )
         
         alpha_hist.append(alpha)
+
+        #Schritt gehen
+        
 
         
 
