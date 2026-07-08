@@ -147,6 +147,12 @@ def minimise_starting_position(
 
         step += 1
 
+
+    print(f"n_steps: {step}")
+    print(f"converged: {max_force_norm(ps.force) < tolerance}")
+    print(f"final_energy: {E}")
+    print(f"final_Fmax: {max_force_norm(ps.force)}")
+
     return {
         "positions": ps.position.copy(),
         "E_hist": np.array(E_hist),
