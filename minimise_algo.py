@@ -89,10 +89,28 @@ def minimise_starting_position(
             alpha0=1e-4
         )
         
-        alpha_hist.append(alpha)
+    alpha_hist.append(alpha)
 
-        #Schritt gehen
-        
+    #Schritt gehen
+    ps.position = ps.position + alpha * p 
+
+    #neue Kräfte berechnen
+    LJ_gas.calculate_force(ps, sim)
+    E = LJ_gas.potential_energy(ps, sim)
+
+    if SD:
+        p = ps.force.copy()
+    else:
+        beta = (ps.force.transpose @ (ps.force - p))/(p.transpose @ p) #Form: Skalar
+        beta = max(beta, 0)
+        p = ps.force + beta * p
+
+    #neuen Werte speichern
+    p_hist.append(p.copy())   
+    pos_hist.append(ps.position.copy())
+    E_hist.append(E)
+    Fmax_hist(max_force_norm(ps.force))
+
 
         
 
