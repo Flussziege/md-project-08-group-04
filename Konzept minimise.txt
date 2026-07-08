@@ -49,6 +49,8 @@ ps.position = ps.position + alpha * p
  - beta mit β_k​=F_k+1 ^T​ (F_k+1​−F_k​)  / F_k ^T F_k
  - dann beta = max( 0, beta)
  
+
+    beta = 0
 9. Neue Suchrichtung berechnen
 - p_k+1 = F_k+1 + beta_k p_k​
 
