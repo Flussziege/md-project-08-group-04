@@ -150,6 +150,7 @@ def minimise_starting_position(
         beta_hist.append(beta)
 
         step += 1
+        print(step)
 
 
     print(f"n_steps: {step}")
