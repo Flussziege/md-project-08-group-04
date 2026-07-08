@@ -61,9 +61,15 @@ def minimise_starting_position(
     E = LJ_gas.potential_energy(ps, sim)
     #position is ps.position  (ps.n, 3) 
 
-
+    #hier ersten Werte  speichern
+    #wenn man nicht copiert, wird nur die ref zum array, nicht der wert gespeichert,
+    #welche später überschrieben wird
     p = ps.force.copy()
-    p_hist.append(p.copy())   #wenn man nicht copiert, wird nur die ref zum array, nicht der wert gespeichert, welche später überschrieben wird
+    p_hist.append(p.copy())   
+    pos_hist.append(ps.position.copy())
+    E_hist.append(E)
+    Fmax_hist(max_force_norm(ps.force))
+
 
     while max_force_norm(ps.force) > tolerance: 
         # alpha bestimmen
@@ -82,6 +88,8 @@ def minimise_starting_position(
             energy_func=energy_func,
             alpha0=1e-4
         )
+        
+        alpha_hist.append(alpha)
 
         
 
