@@ -55,6 +55,7 @@ def minimise_starting_position(
     pos_hist = []
     alpha_hist = []
     p_hist = []
+    beta_hist = []
 
     #startkräfte und start-E_pot
     LJ_gas.calculate_force(ps, sim)
@@ -89,7 +90,6 @@ def minimise_starting_position(
             alpha0=1e-4
         )
         
-    alpha_hist.append(alpha)
 
     #Schritt gehen
     ps.position = ps.position + alpha * p 
@@ -110,6 +110,8 @@ def minimise_starting_position(
     pos_hist.append(ps.position.copy())
     E_hist.append(E)
     Fmax_hist(max_force_norm(ps.force))
+    alpha_hist.append(alpha)
+    beta_hist.append(beta)
 
 
         
