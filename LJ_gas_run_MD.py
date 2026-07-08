@@ -84,10 +84,10 @@ sigma_argon = 0.34              # sigma in nm     Argon: 0.34
 epsilon_argon = 120*R*1e-3      # epsilon in kJ/mol Argon: 120
 
 # simulation
-dt = 0.1             # ps
+dt = 0.001             # ps
 n_steps = 1000 
 temperature = 300     # K
-box_length = 100      # nm
+box_length = 5     # nm
 tau_thermostat = 1  # thermostat coupling constant in 1/ps
 rij_min = 1e-2      # nm
 NVT = True          # switch to decide between NVT and NVE
@@ -122,15 +122,19 @@ for i in range(n_particles):
     ps.set_parameters(i, mass=mass_argon, sigma=sigma_argon, epsilon=epsilon_argon)
 
 # set initial positions     
-initialize_positions(ps, sim.box_length)
+initialize_positions(ps, sim.box_length, seed=42)
 
 #EIGENE FUNKTION die das minimiert
-result = minimise_starting_position(ps, sim, tolerance=1e-10)
+result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=False)
 
 filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(filename, result)
 
-sys.exit()
+from scipy.spatial.distance import pdist
+import numpy as np
+
+print("NaN in position:", np.isnan(ps.position).any())
+print("kleinster Abstand:", pdist(ps.position).min())
 
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)

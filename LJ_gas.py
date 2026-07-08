@@ -107,9 +107,26 @@ class SimulationParameters:
 #--------------------------------------
 # Initialization
 #--------------------------------------
+def initialize_positions(ps: ParticleSystem, box_length_in_nm: float, seed=None):
+    """Initialize particle positions uniformly in a cubic box.
+
+    Wenn seed gesetzt ist, werden reproduzierbare Startpositionen erzeugt.
+    """
+
+    rng = np.random.default_rng(seed)
+
+    ps.position[:] = rng.uniform(
+        0,
+        box_length_in_nm,
+        size=(ps.n, 3)
+    )
+
+"""
 def initialize_positions(ps: ParticleSystem, box_length_in_nm: float):
-    """Initialize particle positions uniformly in a cubic box."""
+    #Initialize particle positions uniformly in a cubic box.
     ps.position[:] = np.random.uniform(0, box_length_in_nm, size=(ps.n, 3))
+"""
+
 
 def initialize_velocities(ps: ParticleSystem, temperature: float):
     """
