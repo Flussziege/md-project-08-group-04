@@ -43,6 +43,13 @@ from LJ_gas import(
     ideal_gas_pressure
     )
 
+from minimise_algo import(
+    minimise_starting_position, 
+    create_minimization_filename, 
+    write_minimization_result_to_csv
+    )
+
+
 #----------------------------------------------------------------
 #   F U N C T I O N S
 #----------------------------------------------------------------
@@ -117,6 +124,10 @@ for i in range(n_particles):
 initialize_positions(ps, sim.box_length)
 
 #EIGENE FUNKTION die das minimiert
+result = minimise_starting_position(ps, sim)
+
+filename = create_minimization_filename("minimization_output")
+write_minimization_result_to_csv(filename, result)
 
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)
