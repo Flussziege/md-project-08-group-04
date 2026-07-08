@@ -2,13 +2,27 @@ How to minimise:
 
 1. Startposition laden
 
+    
+
 2. Energie und Kräfte berechnen
  - benötigen Funktiomem für beides aus LJ potential 
+
+    können
+    
+    calculate_force(ps, sim)
+     F = ps.force nutzen. Ist array der form (ps.n, 3)
+
+    und 
+
+    E = potential_energy(ps, sim)  -> gesamt summe für system
 
 3. Erste Suchrichtung setzen
  - erster Schritt nach steepest descent
     p_0 = F_0
 
+
+
+ps.position = ps.position + alpha * p
 
 ### Hier Beginnt Schleife
 
