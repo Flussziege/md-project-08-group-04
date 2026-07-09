@@ -25,6 +25,7 @@ from scipy.constants import R
 import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
+import argparse
 
 import time
 from datetime import datetime
@@ -50,6 +51,55 @@ from minimise_algo import(
     create_minimization_filename, 
     write_minimization_result_to_csv
     )
+
+#----------------------------------------------------------------
+#   I N P U T
+#----------------------------------------------------------------
+
+
+
+def str_to_bool(value):
+    return str(value).lower() in ["true", "1", "yes", "y"]
+
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--n_particles", type=int, default=200)
+parser.add_argument("--mass_argon", type=float, default=39.95)
+parser.add_argument("--sigma_argon", type=float, default=0.34)
+parser.add_argument("--epsilon_argon", type=float, default=120 * R * 1e-3)
+
+parser.add_argument("--dt", type=float, default=0.1)
+parser.add_argument("--n_steps", type=int, default=1000)
+parser.add_argument("--temperature", type=float, default=300)
+parser.add_argument("--box_length", type=float, default=5.0)
+parser.add_argument("--tau_thermostat", type=float, default=1.0)
+parser.add_argument("--rij_min", type=float, default=1e-2)
+
+parser.add_argument("--NVT", type=str_to_bool, default=True)
+parser.add_argument("--seed", type=int, default=None)
+parser.add_argument("--SD", type=str_to_bool, default=False)
+parser.add_argument("--max_steps", type=int, default=1000)
+
+args = parser.parse_args()
+
+
+n_particles = args.n_particles
+mass_argon = args.mass_argon
+sigma_argon = args.sigma_argon
+epsilon_argon = args.epsilon_argon
+
+dt = args.dt
+n_steps = args.n_steps
+temperature = args.temperature
+box_length = args.box_length
+tau_thermostat = args.tau_thermostat
+rij_min = args.rij_min
+
+NVT = args.NVT
+seed = args.seed
+SD = args.SD
+max_steps = args.max_steps
 
 
 #----------------------------------------------------------------
@@ -116,7 +166,7 @@ for i in range(n_particles):
 initialize_positions(ps, sim.box_length, seed=seed)
 
 #EIGENE FUNKTION die das minimiert
-result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD, max_steps=2000)
+result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD, max_steps=max_steps)
 
 filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(str(filename), result)
