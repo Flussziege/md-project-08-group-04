@@ -137,7 +137,7 @@ for i in range(n_particles):
 initialize_positions(ps, sim.box_length, seed=seed)
 
 #EIGENE FUNKTION die das minimiert
-result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD)
+result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD, max_steps=2000)
 
 filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(str(filename), result)

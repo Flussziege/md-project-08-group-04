@@ -6,6 +6,10 @@ import numpy as np
 df = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-08_22-20-12.csv")
 dg = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-08_22-21-30.csv")
 
+#df = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-09_10-45-40.csv")
+#dg = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-09_10-45-40.csv")
+
+
 #DIFF -Plots berechnen
 
 
