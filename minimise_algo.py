@@ -31,6 +31,20 @@ def backtracking_line_search(
 
     return 0.0   #wenn kein alpha gefunden wird, gibt es alpha = 0 zurück
 
+def backtracking_amijo(x, p, ps, sim, E_old, F, energy_func, alpha0, c1=1e-4):
+    slope = np.sum(F * p)  # Richtungsableitung, sollte > 0 sein
+    if slope <= 0:
+        return 0.0  # p ist keine Abstiegsrichtung
+
+    alpha = alpha0
+    for _ in range(50):
+        x_new = np.mod(x + alpha * p, sim.box_length)
+        E_new = energy_func(x_new, ps, sim)
+        if E_new <= E_old - c1 * alpha * slope:
+            return alpha
+        alpha *= 0.5
+    return 0.0
+
 def energy_func(
         x_new,
         ps: LJ_gas.ParticleSystem, 
@@ -49,6 +63,8 @@ def minimise_starting_position(
         ps: LJ_gas.ParticleSystem, 
         sim: LJ_gas.SimulationParameters, 
         SD: bool = False,
+        recursive_alpha: bool = False,
+        alpha_method: str = "line_search",
         tolerance =1e-5,
         alpha_SD = 1e-5,
         max_steps = 1000
@@ -77,6 +93,7 @@ def minimise_starting_position(
     E_hist.append(E)
     Fmax_hist.append(max_force_norm(ps.force))
     force_hist.append(ps.force.copy()) 
+    alpha = 1e-4
 
     #just to be safe
     step = 0
@@ -91,15 +108,43 @@ def minimise_starting_position(
 
         if SD:
             alpha = alpha_SD
-        else: 
-           alpha = backtracking_line_search(
-            x=ps.position,
-            p=p,
-            ps=ps,
-            sim=sim,
-            E_old=E,
-            energy_func=energy_func,
-            alpha0=1e-4
+        elif alpha_method == "amijo":
+            alpha0 = alpha if recursive_alpha and alpha > 0 else 1e-4
+            alpha = backtracking_amijo(
+                x=ps.position,
+                p=p,
+                ps=ps,
+                sim=sim,
+                E_old=E,
+                F=ps.force,
+                energy_func=energy_func,
+                alpha0=alpha0,
+                c1=1e-2
+            )
+        elif alpha_method == "line_search":
+            alpha0 = alpha if recursive_alpha and alpha > 0 else 1e-4
+            alpha = backtracking_line_search(
+                x=ps.position,
+                p=p,
+                ps=ps,
+                sim=sim,
+                E_old=E,
+                energy_func=energy_func,
+                alpha0=alpha0
+            )
+        elif alpha_method == "fixed":
+            alpha = backtracking_line_search(
+                x=ps.position,
+                p=p,
+                ps=ps,
+                sim=sim,
+                E_old=E,
+                energy_func=energy_func,
+                alpha0=1e-4
+            )
+        else:
+            raise ValueError(
+                f"Unbekannte alpha_method: {alpha_method}. Verwenden Sie 'fixed', 'line_search' oder 'amijo'."
             )
            
         if alpha == 0.0:

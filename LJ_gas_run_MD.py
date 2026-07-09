@@ -79,6 +79,13 @@ parser.add_argument("--rij_min", type=float, default=1e-2)
 parser.add_argument("--NVT", type=str_to_bool, default=True)
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--SD", type=str_to_bool, default=False)
+parser.add_argument("--recoursive_alpha", type=str_to_bool, default=False)
+parser.add_argument(
+    "--alpha_method",
+    type=str,
+    choices=["fixed", "line_search", "amijo"],
+    default="line_search",
+    help="Verfahren zur Bestimmung der Schrittweite alpha in der Minimierung.")
 parser.add_argument("--max_steps", type=int, default=1000)
 
 args = parser.parse_args()
@@ -99,6 +106,8 @@ rij_min = args.rij_min
 NVT = args.NVT
 seed = args.seed
 SD = args.SD
+recoursive_alpha = args.recoursive_alpha
+alpha_method = args.alpha_method
 max_steps = args.max_steps
 
 
@@ -166,12 +175,20 @@ for i in range(n_particles):
 initialize_positions(ps, sim.box_length, seed=seed)
 
 #EIGENE FUNKTION die das minimiert
-result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD, max_steps=max_steps)
+result = minimise_starting_position(
+    ps,
+    sim,
+    tolerance=1e-10,
+    SD=SD,
+    recursive_alpha=recoursive_alpha,
+    alpha_method=alpha_method,
+    max_steps=max_steps
+)
 
 filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(str(filename), result)
 
-
+sys.exit()
 
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)

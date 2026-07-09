@@ -20,9 +20,11 @@ box_length = 5
 tau_thermostat = 1
 rij_min = 1e-2
 NVT = True
-seed = 67
+seed = 42
 SD = False
 max_steps = 1000
+recoursive_alpha = False
+alpha_method = "amijo"
 
 
 project_dir = r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04"
@@ -47,6 +49,8 @@ subprocess.run(
         "--NVT", str(NVT),
         "--seed", str(seed),
         "--SD", str(SD),
+        "--recoursive_alpha", str(recoursive_alpha),
+        "--alpha_method", str(alpha_method),
         "--max_steps", str(max_steps)
     ],
     cwd=project_dir,
