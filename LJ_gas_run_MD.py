@@ -86,13 +86,13 @@ epsilon_argon = 120*R*1e-3      # epsilon in kJ/mol Argon: 120
 
 # simulation
 dt = 0.001             # ps
-n_steps = 5000 
-temperature = 200     # K
-box_length = 3     # nm
+n_steps = 1000 
+temperature = 50     # K
+box_length = 5     # nm
 tau_thermostat = 1  # thermostat coupling constant in 1/ps
 rij_min = 1e-2      # nm
 NVT = True          # switch to decide between NVT and NVE
-seed = 68
+seed = 67
 SD = False
 
 
@@ -137,7 +137,7 @@ for i in range(n_particles):
 initialize_positions(ps, sim.box_length, seed=seed)
 
 #EIGENE FUNKTION die das minimiert
-result = minimise_starting_position(ps, sim, tolerance=1e-10,max_steps=3000, SD=SD)
+result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD, max_steps=2000)
 
 filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(str(filename), result)
