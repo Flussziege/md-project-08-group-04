@@ -12,14 +12,14 @@ Number of time steps:               1000
 Simulation time:               1.000e+00 ps
 
 Ensemble:                            NVT
-Thermostat temperature:              300 K
+Thermostat temperature:               50 K
 Thermostat coupling:           1.000e+00 ps
 
 Lower cutoff radius:               0.010 nm
 ----------------------------------------------------------
-Elapsed time:                    148.626 s
-Elapsed time per time step:        0.149 s
-Time stamp:                   2026-07-08 22:51:11 s
+Elapsed time:                    165.539 s
+Elapsed time per time step:        0.166 s
+Time stamp:                   2026-07-09 09:16:21 s
 ----------------------------------------------------------
 END
 ----------------------------------------------------------
