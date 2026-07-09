@@ -1,4 +1,8 @@
+import csv
 import numpy as np
+from pathlib import Path
+from datetime import datetime
+
 import LJ_gas
 
 def max_force_norm(F):
@@ -146,6 +150,7 @@ def minimise_starting_position(
         beta_hist.append(beta)
 
         step += 1
+        print(step)
 
 
     print(f"n_steps: {step}")
@@ -164,7 +169,94 @@ def minimise_starting_position(
     }
 
 
-        
+#the function that safes the data and creates a new text file with the data in it
 
+def create_minimization_filename(output_dir):
+    """
+    Erzeugt einmalig einen Dateinamen mit Datum und Uhrzeit.
+    """
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    filename = output_dir / f"minimization_data_{timestamp}.csv"
+
+    return filename
+
+
+def write_minimization_result_to_csv(filename, result):
+    """
+    Schreibt die komplette Minimierungs-Historie aus minimise_starting_position()
+    als CSV-Datei.
+    """
+
+    filename = Path(filename)
+
+    required_keys = ["E_hist", "Fmax_hist", "pos_hist", "alpha_hist", "p_hist", "beta_hist"]
+    missing = [key for key in required_keys if key not in result]
+    if missing:
+        raise KeyError(f"result fehlt folgende Schlüssel: {missing}")
+
+    E_hist = np.asarray(result["E_hist"], dtype=float)
+    Fmax_hist = np.asarray(result["Fmax_hist"], dtype=float)
+    pos_hist = np.asarray(result["pos_hist"], dtype=float)
+    alpha_hist = np.asarray(result["alpha_hist"], dtype=float)
+    p_hist = np.asarray(result["p_hist"], dtype=float)
+    beta_hist = np.asarray(result["beta_hist"], dtype=float)
+
+    if pos_hist.ndim != 3 or pos_hist.shape[2] != 3:
+        raise ValueError("pos_hist muss die Form (n_steps, n_particles, 3) haben.")
+
+    if p_hist.shape != pos_hist.shape:
+        raise ValueError("p_hist muss dieselbe Form wie pos_hist haben.")
+
+    if E_hist.shape[0] != pos_hist.shape[0] or Fmax_hist.shape[0] != pos_hist.shape[0]:
+        raise ValueError("E_hist und Fmax_hist müssen dieselbe Anzahl an Schritten wie pos_hist haben.")
+
+    n_steps = pos_hist.shape[0]
+    n_particles = pos_hist.shape[1]
+
+    header = ["step", "E_pot", "Fmax", "alpha", "beta"]
+    for particle in range(n_particles):
+        header.extend([
+            f"pos_{particle}_x",
+            f"pos_{particle}_y",
+            f"pos_{particle}_z",
+            f"p_{particle}_x",
+            f"p_{particle}_y",
+            f"p_{particle}_z",
+        ])
+
+    with open(filename, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+        for step in range(n_steps):
+            row = [step, E_hist[step], Fmax_hist[step]]
+
+            row.append(alpha_hist[step] if step < len(alpha_hist) else np.nan)
+            row.append(beta_hist[step] if step < len(beta_hist) else np.nan)
+
+            positions = pos_hist[step]
+            directions = p_hist[step]
+
+            for particle in range(n_particles):
+                row.extend([
+                    positions[particle, 0],
+                    positions[particle, 1],
+                    positions[particle, 2],
+                    directions[particle, 0],
+                    directions[particle, 1],
+                    directions[particle, 2],
+                ])
+
+            writer.writerow(row)
+
+    print(f"CSV-Datei erfolgreich erstellt und unter {filename} gespeichert.")
+
+    return filename
+
+    
     
     

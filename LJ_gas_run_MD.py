@@ -23,6 +23,7 @@ the simulation workflow.
 import numpy as np
 from scipy.constants import R
 import matplotlib.pyplot as plt
+import sys
 
 import time
 from datetime import datetime
@@ -42,6 +43,13 @@ from LJ_gas import(
     instantaneous_temperature,
     ideal_gas_pressure
     )
+
+from minimise_algo import(
+    minimise_starting_position, 
+    create_minimization_filename, 
+    write_minimization_result_to_csv
+    )
+
 
 #----------------------------------------------------------------
 #   F U N C T I O N S
@@ -117,6 +125,12 @@ for i in range(n_particles):
 initialize_positions(ps, sim.box_length)
 
 #EIGENE FUNKTION die das minimiert
+result = minimise_starting_position(ps, sim, tolerance=1e-10)
+
+filename = create_minimization_filename("minimization_output")
+write_minimization_result_to_csv(filename, result)
+
+sys.exit()
 
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)
