@@ -24,6 +24,7 @@ import numpy as np
 from scipy.constants import R
 import matplotlib.pyplot as plt
 import sys
+from pathlib import Path
 
 import time
 from datetime import datetime
@@ -86,14 +87,25 @@ epsilon_argon = 120*R*1e-3      # epsilon in kJ/mol Argon: 120
 # simulation
 dt = 0.001             # ps
 n_steps = 1000 
-temperature = 300     # K
-box_length = 0.5     # nm
+temperature = 50     # K
+box_length = 5     # nm
 tau_thermostat = 1  # thermostat coupling constant in 1/ps
 rij_min = 1e-2      # nm
 NVT = True          # switch to decide between NVT and NVE
+seed = 67
+SD = False
 
-# output
+
+#----------------------------------------------------------------
+#   O U T P U T
+#----------------------------------------------------------------
+
 file_name_base = "my_simulation"  # file name for all output files
+output_dir_min = Path("minimization_output")
+
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+output_dir = Path("results") / timestamp
+output_dir.mkdir(parents=True, exist_ok=True)
 
 #----------------------------------------------------------------
 #   P R O G R A M
@@ -122,19 +134,15 @@ for i in range(n_particles):
     ps.set_parameters(i, mass=mass_argon, sigma=sigma_argon, epsilon=epsilon_argon)
 
 # set initial positions     
-initialize_positions(ps, sim.box_length, seed=42)
+initialize_positions(ps, sim.box_length, seed=seed)
 
 #EIGENE FUNKTION die das minimiert
-result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=False)
+result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD)
 
 filename = create_minimization_filename("minimization_output")
-write_minimization_result_to_csv(filename, result)
+write_minimization_result_to_csv(str(filename), result)
 
-from scipy.spatial.distance import pdist
-import numpy as np
 
-print("NaN in position:", np.isnan(ps.position).any())
-print("kleinster Abstand:", pdist(ps.position).min())
 
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)
@@ -186,11 +194,23 @@ for i in range(sim.n_steps):
 #--------------------------------------
 # W R I T E    T R A J E C T O R I E S 
 #--------------------------------------
+
 # write position trajectory to file
-write_xyz_trajectory(file_name_base + "_pos.xyz", position_trajectory, atom_symbol="Ar")
+write_xyz_trajectory(
+    str(output_dir / f"{file_name_base}_pos.xyz"),
+    position_trajectory,
+    atom_symbol="Ar"
+)
 # write energy trajectory to file (binary and text)
-np.save(file_name_base + "_ene.npy", energy_trajectory)
-np.savetxt(file_name_base + "_ene.dat", energy_trajectory, fmt="%.6e", header="#E_pot  E_kin  T  P", comments='')
+np.save(output_dir / f"{file_name_base}_ene.npy", energy_trajectory)
+
+np.savetxt(
+    output_dir / f"{file_name_base}_ene.dat",
+    energy_trajectory,
+    fmt="%.6e",
+    header="#E_pot  E_kin  T  P",
+    comments=''
+)
 
 
 #----------------------------------------------------
@@ -202,8 +222,8 @@ time_ps = np.arange(sim.n_steps + 1) * sim.dt
 #
 # potential energy
 # 
-E_pot_min = np.mean(energy_trajectory[:,0]) - 1   # lower limit of E_pot axis
-E_pot_max = np.mean(energy_trajectory[:,0]) + 1   # upper limit of E_pot axis 
+E_pot_min = np.min(energy_trajectory[:,0]) - 1   # lower limit of E_pot axis
+E_pot_max = np.max(energy_trajectory[:,0]) + 1   # upper limit of E_pot axis 
 
 plt.figure(figsize=(8, 6))
 plt.plot(time_ps, energy_trajectory[:,0]) 
@@ -211,7 +231,7 @@ plt.ylim(E_pot_min, E_pot_max)
 plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("E_pot [kJ/mol]", fontsize=14)
 
-plt.savefig(file_name_base + "_Epot.png", dpi=300, bbox_inches='tight')
+plt.savefig(output_dir / f"{file_name_base}_Epot.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #
@@ -226,7 +246,7 @@ plt.ylim(E_kin_min, E_kin_max)
 plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("E_kin [kJ/mol]", fontsize=14)
 
-plt.savefig(file_name_base + "_Ekin.png", dpi=300, bbox_inches='tight')
+plt.savefig(output_dir / f"{file_name_base}_Ekin.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #
@@ -241,14 +261,14 @@ plt.ylim(T_min, T_max)
 plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("T [K]", fontsize=14)
 
-plt.savefig(file_name_base + "_T.png", dpi=300, bbox_inches='tight')
+plt.savefig(output_dir / f"{file_name_base}_T.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #
 # pressure
 # 
-P_min = np.mean(energy_trajectory[:,3]) - 200   # lower limit of P axis
-P_max = np.mean(energy_trajectory[:,3]) + 200   # upper limit of P axis 
+P_min = np.min(energy_trajectory[:,3]) - 200   # lower limit of P axis
+P_max = np.max(energy_trajectory[:,3]) + 200   # upper limit of P axis 
 
 plt.figure(figsize=(8, 6))
 plt.plot(time_ps, energy_trajectory[:,3]) 
@@ -256,7 +276,7 @@ plt.ylim(P_min, P_max)
 plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("P [Pa]", fontsize=14)
 
-plt.savefig(file_name_base + "_P.png", dpi=300, bbox_inches='tight')
+plt.savefig(output_dir / f"{file_name_base}_P.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 
@@ -297,6 +317,13 @@ if elapsed_time:
     output_lines.append(f"{'Elapsed time per time step:':<30}{time_per_time_step:>10.3f} s")
     output_lines.append(f"{'Time stamp:':<30}{now} s")
 output_lines.append("----------------------------------------------------------")
+output_lines.append(f"{'Seed':<30}{seed}")
+output_lines.append(f"{'Steepest Descent':<30}{SD}")
+output_lines.append("----------------------------------------------------------")
+output_lines.append(f"{'Epsilon':<30}{epsilon_argon}")
+output_lines.append(f"{'Sigma':<30}{sigma_argon}")
+output_lines.append(f"{'Mass of particle':<30}{mass_argon}")
+output_lines.append("----------------------------------------------------------")
 output_lines.append("END")  
 output_lines.append("----------------------------------------------------------")
 
@@ -305,6 +332,10 @@ for line in output_lines:
     print(line)
   
 # Write to file
-with open(file_name_base + ".out", "w") as f:
+with open(output_dir / f"{file_name_base}_parameters.txt", "w", encoding="utf-8") as f:
     for line in output_lines:
-        f.write(line + "\n")    
+        f.write(line + "\n")
+    
+with open(output_dir / f"{file_name_base}.out", "w", encoding="utf-8") as f:
+    for line in output_lines:
+        f.write(line + "\n")
