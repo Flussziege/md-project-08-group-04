@@ -56,6 +56,7 @@ def minimise_starting_position(
 
     #Listen um Werte zu speichern
     E_hist = []
+    force_hist = []
     Fmax_hist = []
     pos_hist = []
     alpha_hist = []
@@ -75,6 +76,7 @@ def minimise_starting_position(
     pos_hist.append(ps.position.copy())
     E_hist.append(E)
     Fmax_hist.append(max_force_norm(ps.force))
+    force_hist.append(ps.force.copy()) 
 
     #just to be safe
     step = 0
@@ -145,6 +147,7 @@ def minimise_starting_position(
         p_hist.append(p.copy())   
         pos_hist.append(ps.position.copy())
         E_hist.append(E)
+        force_hist.append(ps.force.copy()) 
         Fmax_hist.append(max_force_norm(ps.force))
         alpha_hist.append(alpha)
         beta_hist.append(beta)
@@ -161,6 +164,7 @@ def minimise_starting_position(
     return {
         "positions": ps.position.copy(),
         "E_hist": np.array(E_hist),
+        "force_hist": np.array(force_hist), 
         "Fmax_hist": np.array(Fmax_hist),
         "pos_hist": np.array(pos_hist),
         "alpha_hist": np.array(alpha_hist),
@@ -185,6 +189,10 @@ def create_minimization_filename(output_dir):
     return filename
 
 
+from pathlib import Path
+import csv
+import numpy as np
+
 def write_minimization_result_to_csv(filename, result):
     """
     Schreibt die komplette Minimierungs-Historie aus minimise_starting_position()
@@ -193,13 +201,23 @@ def write_minimization_result_to_csv(filename, result):
 
     filename = Path(filename)
 
-    required_keys = ["E_hist", "Fmax_hist", "pos_hist", "alpha_hist", "p_hist", "beta_hist"]
+    required_keys = [
+        "E_hist", 
+        "Fmax_hist", 
+        "force_hist", 
+        "pos_hist", 
+        "alpha_hist", 
+        "p_hist", 
+        "beta_hist"
+    ]
+
     missing = [key for key in required_keys if key not in result]
     if missing:
         raise KeyError(f"result fehlt folgende Schlüssel: {missing}")
 
     E_hist = np.asarray(result["E_hist"], dtype=float)
     Fmax_hist = np.asarray(result["Fmax_hist"], dtype=float)
+    force_hist = np.asarray(result["force_hist"], dtype=float)
     pos_hist = np.asarray(result["pos_hist"], dtype=float)
     alpha_hist = np.asarray(result["alpha_hist"], dtype=float)
     p_hist = np.asarray(result["p_hist"], dtype=float)
@@ -207,6 +225,9 @@ def write_minimization_result_to_csv(filename, result):
 
     if pos_hist.ndim != 3 or pos_hist.shape[2] != 3:
         raise ValueError("pos_hist muss die Form (n_steps, n_particles, 3) haben.")
+
+    if force_hist.shape != pos_hist.shape:
+        raise ValueError("force_hist muss dieselbe Form wie pos_hist haben.")
 
     if p_hist.shape != pos_hist.shape:
         raise ValueError("p_hist muss dieselbe Form wie pos_hist haben.")
@@ -217,12 +238,23 @@ def write_minimization_result_to_csv(filename, result):
     n_steps = pos_hist.shape[0]
     n_particles = pos_hist.shape[1]
 
-    header = ["step", "E_pot", "Fmax", "alpha", "beta"]
+    # Kraftbeträge pro Schritt und Teilchen
+    force_norms = np.linalg.norm(force_hist, axis=2)
+
+    # mittlere Kraft und RMS-Kraft pro Schritt
+    Fmean_hist = np.mean(force_norms, axis=1)
+    Frms_hist = np.sqrt(np.mean(force_norms**2, axis=1))
+
+    header = ["step", "E_pot", "Fmax", "Fmean", "Frms", "alpha", "beta"]
+
     for particle in range(n_particles):
         header.extend([
             f"pos_{particle}_x",
             f"pos_{particle}_y",
             f"pos_{particle}_z",
+            f"force_{particle}_x",
+            f"force_{particle}_y",
+            f"force_{particle}_z",
             f"p_{particle}_x",
             f"p_{particle}_y",
             f"p_{particle}_z",
@@ -233,12 +265,18 @@ def write_minimization_result_to_csv(filename, result):
         writer.writerow(header)
 
         for step in range(n_steps):
-            row = [step, E_hist[step], Fmax_hist[step]]
-
-            row.append(alpha_hist[step] if step < len(alpha_hist) else np.nan)
-            row.append(beta_hist[step] if step < len(beta_hist) else np.nan)
+            row = [
+                step,
+                E_hist[step],
+                Fmax_hist[step],
+                Fmean_hist[step],
+                Frms_hist[step],
+                alpha_hist[step] if step < len(alpha_hist) else np.nan,
+                beta_hist[step] if step < len(beta_hist) else np.nan,
+            ]
 
             positions = pos_hist[step]
+            forces = force_hist[step]
             directions = p_hist[step]
 
             for particle in range(n_particles):
@@ -246,6 +284,9 @@ def write_minimization_result_to_csv(filename, result):
                     positions[particle, 0],
                     positions[particle, 1],
                     positions[particle, 2],
+                    forces[particle, 0],
+                    forces[particle, 1],
+                    forces[particle, 2],
                     directions[particle, 0],
                     directions[particle, 1],
                     directions[particle, 2],
@@ -256,7 +297,6 @@ def write_minimization_result_to_csv(filename, result):
     print(f"CSV-Datei erfolgreich erstellt und unter {filename} gespeichert.")
 
     return filename
-
     
     
     

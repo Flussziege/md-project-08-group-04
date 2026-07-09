@@ -37,3 +37,6 @@ Größten Fragen:
 - 
 
 
+Beobachtungen:
+
+- parameter 200 - 500  teilchen zu 100nm seite viel zu wenig dicht
