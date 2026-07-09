@@ -160,7 +160,7 @@ def minimise_starting_position(
     print(f"converged: {max_force_norm(ps.force) < tolerance}")
     print(f"final_energy: {E}")
     print(f"final_Fmax: {max_force_norm(ps.force)}")
-    print(f"avg. Force: {np.mean(np.linalg.norm(ps.force, axis=2), axis=1)}")
+    #print(f"avg. Force: {np.mean(np.linalg.norm(ps.force, axis=2), axis=1)}")
 
     return {
         "positions": ps.position.copy(),

@@ -92,6 +92,8 @@ box_length = 5     # nm
 tau_thermostat = 1  # thermostat coupling constant in 1/ps
 rij_min = 1e-2      # nm
 NVT = True          # switch to decide between NVT and NVE
+seed = 67
+SD = False
 
 
 #----------------------------------------------------------------
@@ -99,6 +101,7 @@ NVT = True          # switch to decide between NVT and NVE
 #----------------------------------------------------------------
 
 file_name_base = "my_simulation"  # file name for all output files
+output_dir_min = Path("minimization_output")
 
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 output_dir = Path("results") / timestamp
@@ -131,12 +134,12 @@ for i in range(n_particles):
     ps.set_parameters(i, mass=mass_argon, sigma=sigma_argon, epsilon=epsilon_argon)
 
 # set initial positions     
-initialize_positions(ps, sim.box_length, seed=67)
+initialize_positions(ps, sim.box_length, seed=seed)
 
 #EIGENE FUNKTION die das minimiert
-result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=False)
+result = minimise_starting_position(ps, sim, tolerance=1e-10, SD=SD)
 
-filename = output_dir / create_minimization_filename("minimization_output")
+filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(str(filename), result)
 
 
@@ -314,6 +317,13 @@ if elapsed_time:
     output_lines.append(f"{'Elapsed time per time step:':<30}{time_per_time_step:>10.3f} s")
     output_lines.append(f"{'Time stamp:':<30}{now} s")
 output_lines.append("----------------------------------------------------------")
+output_lines.append(f"{'Seed':<30}{seed}")
+output_lines.append(f"{'Steepest Descent':<30}{SD}")
+output_lines.append("----------------------------------------------------------")
+output_lines.append(f"{'Epsilon':<30}{epsilon_argon}")
+output_lines.append(f"{'Sigma':<30}{sigma_argon}")
+output_lines.append(f"{'Mass of particle':<30}{mass_argon}")
+output_lines.append("----------------------------------------------------------")
 output_lines.append("END")  
 output_lines.append("----------------------------------------------------------")
 
@@ -323,5 +333,9 @@ for line in output_lines:
   
 # Write to file
 with open(output_dir / f"{file_name_base}_parameters.txt", "w", encoding="utf-8") as f:
+    for line in output_lines:
+        f.write(line + "\n")
+    
+with open(output_dir / f"{file_name_base}.out", "w", encoding="utf-8") as f:
     for line in output_lines:
         f.write(line + "\n")
