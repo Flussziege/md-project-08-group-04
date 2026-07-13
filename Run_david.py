@@ -20,19 +20,23 @@ box_length = 5
 tau_thermostat = 1
 rij_min = 1e-2
 NVT = True
-seed = 67
+seed = 100
 SD = False
 max_steps = 1000
 alpha_factor = 2.0
 alpha_new_idea = False
 
+run_script = project_dir / "LJ_gas_run_MD.py"
 
-project_dir = r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04"
+if not run_script.is_file():
+    raise FileNotFoundError(
+        f"LJ_gas_run_MD.py wurde nicht gefunden: {run_script}"
+    )
 
 subprocess.run(
     [
         sys.executable,
-        "LJ_gas_run_MD.py",
+        str(run_script),
 
         "--n_particles", str(n_particles),
         "--mass_argon", str(mass_argon),
@@ -49,10 +53,8 @@ subprocess.run(
         "--NVT", str(NVT),
         "--seed", str(seed),
         "--SD", str(SD),
-        "--alpha_factor", str(alpha_factor),
-        "--alpha_new_idea", str(alpha_new_idea),
-        "--max_steps", str(max_steps)
+        "--max_steps", str(max_steps),
     ],
     cwd=project_dir,
-    check=True
+    check=True,
 )
