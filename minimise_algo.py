@@ -112,7 +112,7 @@ def minimise_starting_position(
         # neue Suchrichtung berechnen
 
         if alpha_new_idea and step > 0 and step % 1000 == 0:
-            alpha_new_idea_scale = max(0.0, alpha_new_idea_scale - 0.2)
+            alpha_new_idea_scale = max(0.1, alpha_new_idea_scale - 0.2)
             print(f"alpha_new_idea_scale: {alpha_new_idea_scale}")
 
         if SD:
