@@ -10,13 +10,22 @@ from scipy.constants import R
 
 
 # ----------------------------------------------------------------
-#   P A R A M E T E R S
+#   E I N S T E L L U N G E N
 # ----------------------------------------------------------------
 
 project_dir = Path(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04")
 output_dir = project_dir / "minimization_output"
 
-# system
+use_existing_files = True   # True: vorhandene Dateien benutzen
+force_rerun = False         # True: Simulationen immer neu starten
+
+line_width = 0.9            # dünnere Linien im Plot
+
+
+# ----------------------------------------------------------------
+#   B A S I S - P A R A M E T E R
+# ----------------------------------------------------------------
+
 base_args = {
     "n_particles": 200,
     "mass_argon": 39.95,
@@ -31,40 +40,70 @@ base_args = {
     "rij_min": 1e-2,
 
     "NVT": True,
-    "seed": 42,
-    "max_steps": 3000,
+    "seed": 67,
+    "max_steps": 6000,
 }
 
-
-# Falls du in argparse wirklich "amijo" geschrieben hast, dann hier "amijo" lassen.
-# Besser wäre langfristig: überall zu "armijo" korrigieren.
-ARMİJO_NAME = "amijo"
-
-
 methods = [
-    {
-        "label": "CG line search",
-        "SD": False,
-        "recoursive_alpha": False,
-        "alpha_method": "line_search",
-    },
-    {
-        "label": "CG line search recursive alpha",
+        {
+        "label": "CG armijo - a 2.0 - False",
         "SD": False,
         "recoursive_alpha": True,
-        "alpha_method": "line_search",
+        "alpha_method": "armijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
     },
     {
-        "label": "CG Armijo",
+        "label": "CG armijo - a 2.0 - True",
         "SD": False,
-        "recoursive_alpha": False,
-        "alpha_method": "amijo",
+        "recoursive_alpha": True,
+        "alpha_method": "armijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": True,
     },
 ]
+"""
+methods = [
+    {
+        "label": "CG Armijo - alpha-1.1",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 1.1,
+    },
+    {
+        "label": "CG Armijo - alpha-1.3",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 1.3,
+    },
+    {
+        "label": "CG Armijo - alpha-1.6",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 1.6,
+    },
+    {
+        "label": "CG Armijo - alpha-2.0",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+    },
+]
+"""
+
+
+# ----------------------------------------------------------------
+#   H I L F S F U N K T I O N E N
+# ----------------------------------------------------------------
 
 def label_to_filename(label):
     """
-    Macht aus 'CG line search' einen sicheren Dateinamen.
+    Macht aus z.B. 'CG Armijo - alpha-1.1'
+    den Dateinamen 'cg_armijo_alpha_1_1'.
     """
     name = label.lower()
     name = re.sub(r"[^a-z0-9]+", "_", name)
@@ -72,9 +111,18 @@ def label_to_filename(label):
     return name
 
 
+def get_named_csv_path(method):
+    """
+    Gibt den erwarteten Dateipfad für eine Methode zurück.
+    """
+    safe_name = label_to_filename(method["label"])
+    return output_dir / f"minimization_{safe_name}.csv"
+
+
 def newest_csv_since(start_time):
     """
-    Findet die neueste CSV-Datei, die nach start_time erzeugt wurde.
+    Findet die neueste minimization_data_*.csv,
+    die seit start_time erzeugt wurde.
     """
     csv_files = list(output_dir.glob("minimization_data_*.csv"))
 
@@ -92,15 +140,28 @@ def newest_csv_since(start_time):
 def run_one_method(method):
     """
     Startet LJ_gas_run_MD.py einmal mit einer bestimmten Minimierungsmethode.
-    Danach wird die neu erzeugte CSV sinnvoll umbenannt.
+    Falls eine passende Datei schon existiert und use_existing_files=True ist,
+    wird diese Datei direkt verwendet.
     """
 
+    named_csv_file = get_named_csv_path(method)
+
+    # Bestehende Datei verwenden
+    if use_existing_files and named_csv_file.exists() and not force_rerun:
+        print(f"Verwende bestehende Datei für {method['label']}:")
+        print(named_csv_file)
+        return named_csv_file
+
+    # Sonst Simulation neu starten
     args = base_args.copy()
     args.update({
         "SD": method["SD"],
         "recoursive_alpha": method["recoursive_alpha"],
         "alpha_method": method["alpha_method"],
     })
+
+    if "rec_alpha_value" in method:
+        args["alpha_factor"] = method["rec_alpha_value"]
 
     cmd = [
         sys.executable,
@@ -124,21 +185,18 @@ def run_one_method(method):
 
     csv_file = newest_csv_since(start_time)
 
-    safe_name = label_to_filename(method["label"])
-    new_csv_file = output_dir / f"minimization_{safe_name}.csv"
+    if named_csv_file.exists():
+        named_csv_file.unlink()
 
-    if new_csv_file.exists():
-        new_csv_file.unlink()
+    csv_file.rename(named_csv_file)
 
-    csv_file.rename(new_csv_file)
+    print(f"Gespeichert als: {named_csv_file}")
 
-    print(f"Gespeichert als: {new_csv_file}")
-
-    return new_csv_file
+    return named_csv_file
 
 
 # ----------------------------------------------------------------
-#   A L L E   M E T H O D E N   S T A R T E N
+#   D A T E I E N   H O L E N   O D E R   S I M U L A T I O N E N   S T A R T E N
 # ----------------------------------------------------------------
 
 csv_paths = {}
@@ -165,7 +223,12 @@ def plot_quantity(column, ylabel, title, ylim=None, logy=False):
     plt.figure(figsize=(8, 5))
 
     for label, df in data.items():
-        plt.plot(df["step"], df[column], label=label)
+        plt.plot(
+            df["step"],
+            df[column],
+            label=label,
+            linewidth=line_width
+        )
 
     plt.xlabel("Minimierungsschritt")
     plt.ylabel(ylabel)
@@ -192,7 +255,7 @@ plot_quantity(
     ylabel="maximale Kraft $F_{max}$",
     title="Vergleich der maximalen Kraft während der Minimierung",
     logy=False,
-    ylim=(-30,30)
+    ylim=(-30, 30)
 )
 
 plot_quantity(
@@ -200,7 +263,7 @@ plot_quantity(
     ylabel="mittlere Kraft $F_{mean}$",
     title="Vergleich der mittleren Kraft während der Minimierung",
     logy=False,
-    ylim=(-30,30)
+    ylim=(-30, 30)
 )
 
 plot_quantity(
@@ -208,7 +271,7 @@ plot_quantity(
     ylabel="RMS-Kraft $F_{RMS}$",
     title="Vergleich der RMS-Kraft während der Minimierung",
     logy=False,
-    ylim=(-30,30)
+    ylim=(-30, 30)
 )
 
 plot_quantity(
@@ -216,5 +279,5 @@ plot_quantity(
     ylabel="potentielle Energie $E_{pot}$",
     title="Vergleich der potentiellen Energie während der Minimierung",
     logy=False,
-    ylim=(-600,30)
+    ylim=(-800, 30)
 )

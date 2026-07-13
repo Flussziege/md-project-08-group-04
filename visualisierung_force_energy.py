@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # CSV einlesen
-df = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-08_22-20-12.csv")
-dg = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-08_22-21-30.csv")
-dh = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-09_13-44-12.csv")
+#df = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-08_22-20-12.csv")
+#dg = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-08_22-21-30.csv")
+#dh = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-09_13-44-12.csv")
+
+df = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-09_19-24-36.csv")
 
 
 #df = pd.read_csv(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-09_10-45-40.csv")
@@ -40,8 +42,8 @@ diff_Epot.iloc[:n] = np.nan
 plt.figure(figsize=(8, 5))
 
 plt.plot(df["step"], df["Fmax"],  label="CG: $F_{max}$")
-plt.plot(dg["step"], dg["Fmax"],  label="SD: $F_{max}$")
-plt.plot(dh["step"], dh["Fmax"],  label="CG - alpha : $F_{max}$")
+#plt.plot(dg["step"], dg["Fmax"],  label="SD: $F_{max}$")
+#plt.plot(dh["step"], dh["Fmax"],  label="CG - alpha : $F_{max}$")
 #plt.plot(dg["step"], diff_fmax,  label="CG - SD: $F_{max}$")
 
 plt.xlabel("Minimierungsschritt")
@@ -61,8 +63,8 @@ plt.show()
 plt.figure(figsize=(8, 5))
 
 plt.plot(df["step"], df["Fmean"], label="df: $F_{mean}$")
-plt.plot(dg["step"], dg["Fmean"],  label="dg: $F_{mean}$")
-plt.plot(dh["step"], dh["Fmean"],  label="CG - alpha: $F_{mean}$")
+#plt.plot(dg["step"], dg["Fmean"],  label="dg: $F_{mean}$")
+#plt.plot(dh["step"], dh["Fmean"],  label="CG - alpha: $F_{mean}$")
 #plt.plot(dg["step"], diff_favg,  label="CD - SD: $F_{mean}$")
 
 
@@ -83,8 +85,8 @@ plt.show()
 plt.figure(figsize=(8, 5))
 
 plt.plot(df["step"], df["Frms"],  label="df: $F_{RMS}$")
-plt.plot(dg["step"], dg["Frms"],  label="dg: $F_{RMS}$")
-plt.plot(dh["step"], dh["Frms"],  label="CG - alpha: $F_{RMS}$")
+#plt.plot(dg["step"], dg["Frms"],  label="dg: $F_{RMS}$")
+#plt.plot(dh["step"], dh["Frms"],  label="CG - alpha: $F_{RMS}$")
 
 #plt.plot(dg["step"], diff_frms,  label="CD - SD: $F_{RMS}$")
 
@@ -106,8 +108,8 @@ plt.show()
 plt.figure(figsize=(8, 5))
 
 plt.plot(df["step"], df["E_pot"],  label="df: $E_{pot}$")
-plt.plot(dg["step"], dg["E_pot"],  label="dg: $E_{pot}$")
-plt.plot(dh["step"], dh["E_pot"],  label="CG - alpha: $E_{pot}$")
+#plt.plot(dg["step"], dg["E_pot"],  label="dg: $E_{pot}$")
+#plt.plot(dh["step"], dh["E_pot"],  label="CG - alpha: $E_{pot}$")
 
 #plt.plot(dg["step"], diff_Epot,  label="CG - SD: $E_{pot}$")
 

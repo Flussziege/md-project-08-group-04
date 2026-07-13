@@ -23,6 +23,8 @@ NVT = True
 seed = 67
 SD = False
 max_steps = 1000
+alpha_factor = 2.0
+alpha_new_idea = False
 
 
 project_dir = r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04"
@@ -47,6 +49,8 @@ subprocess.run(
         "--NVT", str(NVT),
         "--seed", str(seed),
         "--SD", str(SD),
+        "--alpha_factor", str(alpha_factor),
+        "--alpha_new_idea", str(alpha_new_idea),
         "--max_steps", str(max_steps)
     ],
     cwd=project_dir,

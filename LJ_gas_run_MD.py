@@ -86,6 +86,18 @@ parser.add_argument(
     choices=["fixed", "line_search", "amijo"],
     default="line_search",
     help="Verfahren zur Bestimmung der Schrittweite alpha in der Minimierung.")
+parser.add_argument(
+    "--alpha_factor",
+    type=float,
+    default=2.0,
+    help="Faktor mit dem alpha multipliziert wird, wenn recursive_alpha aktiv ist (Standard: 2.0)"
+)
+parser.add_argument(
+    "--alpha_new_idea",
+    type=str_to_bool,
+    default=False,
+    help="Aktiviert die zusätzliche alpha_new_idea-Strategie für die Minimierung."
+)
 parser.add_argument("--max_steps", type=int, default=1000)
 
 args = parser.parse_args()
@@ -108,6 +120,8 @@ seed = args.seed
 SD = args.SD
 recoursive_alpha = args.recoursive_alpha
 alpha_method = args.alpha_method
+alpha_factor = args.alpha_factor
+alpha_new_idea = args.alpha_new_idea
 max_steps = args.max_steps
 
 
@@ -133,17 +147,6 @@ def toc():
     
     return elapsed_time
 
-
-#----------------------------------------------------------------
-#   O U T P U T
-#----------------------------------------------------------------
-
-file_name_base = "my_simulation"  # file name for all output files
-output_dir_min = Path("minimization_output")
-
-timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-output_dir = Path("results") / timestamp
-output_dir.mkdir(parents=True, exist_ok=True)
 
 #----------------------------------------------------------------
 #   P R O G R A M
@@ -182,13 +185,30 @@ result = minimise_starting_position(
     SD=SD,
     recursive_alpha=recoursive_alpha,
     alpha_method=alpha_method,
-    max_steps=max_steps
+    alpha_factor=alpha_factor,
+    max_steps=max_steps,
+    alpha_new_idea=alpha_new_idea
 )
 
 filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(str(filename), result)
 
 sys.exit()
+
+#----------------------------------------------------------------
+#   O U T P U T
+#----------------------------------------------------------------
+
+file_name_base = "my_simulation"  # file name for all output files
+output_dir_min = Path("minimization_output")
+
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+output_dir = Path("results") / timestamp
+output_dir.mkdir(parents=True, exist_ok=True)
+
+#----------------------------------------------------------------
+#   
+#----------------------------------------------------------------
 
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)

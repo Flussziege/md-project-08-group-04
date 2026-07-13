@@ -22,9 +22,11 @@ rij_min = 1e-2
 NVT = True
 seed = 42
 SD = False
-max_steps = 1000
-recoursive_alpha = False
-alpha_method = "amijo"
+max_steps = 10000
+recoursive_alpha = True
+alpha_method = "line_search"
+alpha_factor = 2.0
+alpha_new_idea = False
 
 
 project_dir = r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04"
@@ -51,6 +53,8 @@ subprocess.run(
         "--SD", str(SD),
         "--recoursive_alpha", str(recoursive_alpha),
         "--alpha_method", str(alpha_method),
+        "--alpha_factor", str(alpha_factor),
+        "--alpha_new_idea", str(alpha_new_idea),
         "--max_steps", str(max_steps)
     ],
     cwd=project_dir,

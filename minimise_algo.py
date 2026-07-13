@@ -65,9 +65,11 @@ def minimise_starting_position(
         SD: bool = False,
         recursive_alpha: bool = False,
         alpha_method: str = "line_search",
+        alpha_factor: float = 2.0,
         tolerance =1e-5,
         alpha_SD = 1e-5,
-        max_steps = 1000
+        max_steps = 1000,
+        alpha_new_idea: bool = False
         ):
 
     #Listen um Werte zu speichern
@@ -94,6 +96,7 @@ def minimise_starting_position(
     Fmax_hist.append(max_force_norm(ps.force))
     force_hist.append(ps.force.copy()) 
     alpha = 1e-4
+    alpha0 = 1e-4
 
     #just to be safe
     step = 0
@@ -106,10 +109,16 @@ def minimise_starting_position(
         # neue Energie berechnen
         # neue Suchrichtung berechnen
 
+        if alpha_new_idea and step > 0 and step % 1000 == 0 and alpha >= 1.0:
+            alpha0 = max(1e-6, alpha0 - 0.2)
+
         if SD:
             alpha = alpha_SD
         elif alpha_method == "amijo":
-            alpha0 = alpha if recursive_alpha and alpha > 0 else 1e-4
+            if recursive_alpha and alpha > 0:
+                alpha0 = alpha_factor * alpha
+            else:
+                alpha0 = 1e-4
             alpha = backtracking_amijo(
                 x=ps.position,
                 p=p,
@@ -122,7 +131,10 @@ def minimise_starting_position(
                 c1=1e-2
             )
         elif alpha_method == "line_search":
-            alpha0 = alpha if recursive_alpha and alpha > 0 else 1e-4
+            if recursive_alpha and alpha > 0:
+                alpha0 = alpha_factor * alpha
+            else:
+                alpha0 = 1e-4
             alpha = backtracking_line_search(
                 x=ps.position,
                 p=p,
