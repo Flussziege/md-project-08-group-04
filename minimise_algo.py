@@ -97,6 +97,8 @@ def minimise_starting_position(
     force_hist.append(ps.force.copy()) 
     alpha = 1e-4
     alpha0 = 1e-4
+    alpha_scale = 1.0
+    alpha_new_idea_scale = alpha_factor if alpha_new_idea else 1.0
 
     #just to be safe
     step = 0
@@ -109,16 +111,21 @@ def minimise_starting_position(
         # neue Energie berechnen
         # neue Suchrichtung berechnen
 
-        if alpha_new_idea and step > 0 and step % 1000 == 0 and alpha >= 1.0:
-            alpha0 = max(1e-6, alpha0 - 0.2)
+        if alpha_new_idea and step > 0 and step % 1000 == 0:
+            alpha_new_idea_scale = max(0.0, alpha_new_idea_scale - 0.2)
+            print(f"alpha_new_idea_scale: {alpha_new_idea_scale}")
 
         if SD:
             alpha = alpha_SD
         elif alpha_method == "amijo":
             if recursive_alpha and alpha > 0:
-                alpha0 = alpha_factor * alpha
+                if alpha_new_idea:
+                    alpha0 = alpha_new_idea_scale * alpha
+                else:
+                    alpha0 = alpha * alpha_factor
             else:
-                alpha0 = 1e-4
+                alpha0 = alpha0
+
             alpha = backtracking_amijo(
                 x=ps.position,
                 p=p,
@@ -132,9 +139,13 @@ def minimise_starting_position(
             )
         elif alpha_method == "line_search":
             if recursive_alpha and alpha > 0:
-                alpha0 = alpha_factor * alpha
+                if alpha_new_idea:
+                    alpha0 = alpha_new_idea_scale * alpha
+                else:
+                    alpha0 = alpha * alpha_factor
             else:
-                alpha0 = 1e-4
+                alpha0 = alpha0
+
             alpha = backtracking_line_search(
                 x=ps.position,
                 p=p,
@@ -145,6 +156,7 @@ def minimise_starting_position(
                 alpha0=alpha0
             )
         elif alpha_method == "fixed":
+            alpha0 = alpha0 
             alpha = backtracking_line_search(
                 x=ps.position,
                 p=p,
@@ -152,7 +164,7 @@ def minimise_starting_position(
                 sim=sim,
                 E_old=E,
                 energy_func=energy_func,
-                alpha0=1e-4
+                alpha0=alpha0
             )
         else:
             raise ValueError(

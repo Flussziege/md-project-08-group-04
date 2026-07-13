@@ -45,11 +45,11 @@ base_args = {
 }
 
 methods = [
-        {
+    {
         "label": "CG armijo - a 2.0 - False",
         "SD": False,
         "recoursive_alpha": True,
-        "alpha_method": "armijo",
+        "alpha_method": "amijo",
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
@@ -57,11 +57,12 @@ methods = [
         "label": "CG armijo - a 2.0 - True",
         "SD": False,
         "recoursive_alpha": True,
-        "alpha_method": "armijo",
+        "alpha_method": "amijo",
         "rec_alpha_value": 2.0,
         "alpha_new_idea": True,
     },
 ]
+
 """
 methods = [
     {
@@ -158,6 +159,7 @@ def run_one_method(method):
         "SD": method["SD"],
         "recoursive_alpha": method["recoursive_alpha"],
         "alpha_method": method["alpha_method"],
+        "alpha_new_idea": method.get("alpha_new_idea", False),
     })
 
     if "rec_alpha_value" in method:
