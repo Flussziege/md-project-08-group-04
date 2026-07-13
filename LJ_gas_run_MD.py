@@ -193,8 +193,6 @@ result = minimise_starting_position(
 filename = create_minimization_filename("minimization_output")
 write_minimization_result_to_csv(str(filename), result)
 
-sys.exit()
-
 #----------------------------------------------------------------
 #   O U T P U T
 #----------------------------------------------------------------
