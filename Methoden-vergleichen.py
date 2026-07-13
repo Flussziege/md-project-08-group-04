@@ -46,18 +46,18 @@ base_args = {
 
 methods = [
     {
-        "label": "CG armijo - a 2.0 - False",
+        "label": "CG line search - a 2.0 - False",
         "SD": False,
         "recoursive_alpha": True,
-        "alpha_method": "amijo",
+        "alpha_method": "line_search",
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
     {
-        "label": "CG armijo - a 2.0 - True",
+        "label": "CG line search - a 2.0 - True",
         "SD": False,
         "recoursive_alpha": True,
-        "alpha_method": "amijo",
+        "alpha_method": "line_search",
         "rec_alpha_value": 2.0,
         "alpha_new_idea": True,
     },
@@ -94,6 +94,17 @@ methods = [
         "rec_alpha_value": 2.0,
     },
 ]
+
+    {
+        "label": "CG armijo - a 2.0 - True",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": True,
+    },
+
+
 """
 
 
