@@ -339,3 +339,5 @@ def plot_xyz_trajectory_with_slider(
 
     fig.show()
 
+make_box_trace(10.0)
+plot_xyz_trajectory_with_slider("results/2026-07-13_21-17-25/my_simulation_pos.xyz", box_length_nm=10, frame_stride=50)
