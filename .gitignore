@@ -5,4 +5,4 @@ minimization_output/*.csv
 results/**/*.xyz
 results/**/*.npy
 results/**/*.dat
-results/**/*.html
+#results/**/*.html
