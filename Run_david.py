@@ -15,7 +15,7 @@ epsilon_argon = 120 * R * 1e-3  # epsilon in kJ/mol
 # simulation
 dt = 0.001
 n_steps = 30000
-temperature = 80
+temperature = 200
 box_length = 6
 tau_thermostat = 1
 rij_min = 1e-2
@@ -23,6 +23,8 @@ NVT = True
 seed = 101
 SD = False
 max_steps = 6000
+recoursive_alpha = True
+alpha_method = "amijo"
 alpha_factor = 2.0
 alpha_new_idea = True
 
@@ -31,7 +33,7 @@ project_dir = (
     / "Documents"
     / "VSCODE"
     / "moldyn_proj"
-    / "md-project-08-group-04"
+    / "md-project"
 )
 
 run_script = project_dir / "LJ_gas_run_MD.py"
@@ -44,7 +46,7 @@ if not run_script.is_file():
 subprocess.run(
     [
         sys.executable,
-        str(run_script),
+        "LJ_gas_run_MD.py",
 
         "--n_particles", str(n_particles),
         "--mass_argon", str(mass_argon),
@@ -61,8 +63,12 @@ subprocess.run(
         "--NVT", str(NVT),
         "--seed", str(seed),
         "--SD", str(SD),
-        "--max_steps", str(max_steps),
+        "--recoursive_alpha", str(recoursive_alpha),
+        "--alpha_method", str(alpha_method),
+        "--alpha_factor", str(alpha_factor),
+        "--alpha_new_idea", str(alpha_new_idea),
+        "--max_steps", str(max_steps)
     ],
     cwd=project_dir,
-    check=True,
+    check=True
 )
