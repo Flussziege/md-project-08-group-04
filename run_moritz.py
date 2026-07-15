@@ -15,12 +15,12 @@ epsilon_argon = 120 * R * 1e-3  # epsilon in kJ/mol
 # simulation
 dt = 0.001
 n_steps = 30000
-temperature = 80
+temperature = 160
 box_length = 6
 tau_thermostat = 1
 rij_min = 1e-2
 NVT = True
-seed = 101
+seed = 42
 SD = False
 max_steps = 6000
 recoursive_alpha = True

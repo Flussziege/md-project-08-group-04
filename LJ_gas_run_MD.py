@@ -239,6 +239,9 @@ energy_trajectory[0,3] = ideal_gas_pressure(ps, sim)      # ideal gas pressure
 #--------------------------------------------------
 #  The acutal MD simulation
 #--------------------------------------------------
+
+sim_step = 0
+
 for i in range(sim.n_steps):
     if NVT==True:
         simulate_NVT_step(ps, sim)
@@ -254,6 +257,7 @@ for i in range(sim.n_steps):
     energy_trajectory[i+1,2] = instantaneous_temperature(ps)  # instantaneous pressure
     energy_trajectory[i+1,3] = ideal_gas_pressure(ps, sim)    # ideal gas pressure
 
+    sim_step +=1
 
 #--------------------------------------
 # W R I T E    T R A J E C T O R I E S 
