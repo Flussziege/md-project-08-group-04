@@ -2,6 +2,7 @@ minimization_output/*.csv
 minimization_output/**/*.csv
 minimization_output/**/*.xyz
 
+telegram_notify
 
 
 
