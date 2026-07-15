@@ -46,20 +46,20 @@ base_args = {
 
 methods = [
     {
-        "label": "CG line search - a 2.0 - False",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "line_search",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },
-    {
         "label": "CG line search - a 2.0 - True",
         "SD": False,
         "recoursive_alpha": True,
         "alpha_method": "line_search",
         "rec_alpha_value": 2.0,
         "alpha_new_idea": True,
+    },
+        {
+        "label": "SD",
+        "SD": True,
+        "recoursive_alpha": True,
+        "alpha_method": "line_search",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
     },
 ]
 

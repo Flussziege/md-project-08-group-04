@@ -7,26 +7,26 @@ from scipy.constants import R
 #   P A R A M E T E R S
 #----------------------------------------------------------------
 # system
-n_particles = 200
+n_particles = 500
 mass_argon = 39.95              # mass in u = 1e-3 kg/mol
 sigma_argon = 0.34              # sigma in nm
 epsilon_argon = 120 * R * 1e-3  # epsilon in kJ/mol
 
 # simulation
 dt = 0.001
-n_steps = 1000
-temperature = 50
-box_length = 5
+n_steps = 30000
+temperature = 80
+box_length = 6
 tau_thermostat = 1
 rij_min = 1e-2
 NVT = True
-seed = 42
+seed = 101
 SD = False
-max_steps = 10000
+max_steps = 6000
 recoursive_alpha = True
-alpha_method = "line_search"
+alpha_method = "amijo"
 alpha_factor = 2.0
-alpha_new_idea = False
+alpha_new_idea = True
 
 
 project_dir = r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04"

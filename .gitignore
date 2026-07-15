@@ -1,2 +1,8 @@
 minimization_output/*.csv
-results/
+
+
+
+results/**/*.xyz
+results/**/*.npy
+results/**/*.dat
+#results/**/*.html
