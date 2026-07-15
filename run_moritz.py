@@ -1,6 +1,7 @@
 import subprocess
 import sys
 from scipy.constants import R
+import telegram_notify
 
 
 #----------------------------------------------------------------

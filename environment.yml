@@ -1,0 +1,17 @@
+﻿name: md-course
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - python=3.11
+  - mdtraj
+  - openmm
+  - matplotlib
+  - ipykernel
+  - pandas
+  - nglview
+  - scipy
+  - jupyterlab
+  - plotly
+prefix: C:\Users\morit\miniconda3\envs\md-course
