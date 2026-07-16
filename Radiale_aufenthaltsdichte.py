@@ -12,7 +12,7 @@ from cluster_functions import read_xyz_trajectory
 # ================================================================
 
 XYZ_PATH = Path(
-    "results/Long_sim/my_simulation_pos.xyz"
+    "results\2026-07-15_19-30-00\my_simulation_pos.xyz"
 )
 
 # Boxlänge der Simulation in nm
