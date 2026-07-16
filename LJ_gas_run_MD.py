@@ -30,6 +30,10 @@ import argparse
 import time
 from datetime import datetime
 
+from datetime import datetime
+
+
+
 from LJ_gas import(
     ParticleSystem,
     SimulationParameters,
@@ -55,6 +59,8 @@ from minimise_algo import(
 #----------------------------------------------------------------
 #   I N P U T
 #----------------------------------------------------------------
+
+
 
 
 
@@ -258,7 +264,12 @@ for i in range(sim.n_steps):
     energy_trajectory[i+1,3] = ideal_gas_pressure(ps, sim)    # ideal gas pressure
 
     if sim_step % 100 ==0:
-        print(f"Zeitpunkt: {time.time()}; Simulationschritt: {sim_step}")
+
+        timestamp = time.time()
+
+        uhrzeit = datetime.fromtimestamp(timestamp)
+
+        print(f"Zeitpunkt: {uhrzeit.strftime("%d.%m.%Y, %H:%M:%S")}; Simulationschritt: {sim_step}")
 
     sim_step +=1
 
