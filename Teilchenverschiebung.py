@@ -12,8 +12,7 @@ import matplotlib.pyplot as plt
 
 # Hier eine oder mehrere Dateien eintragen
 FILE_PATHS = [
-    Path(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_cg_armijo_a_2_0_false.csv"),
-    Path(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_cg_armijo_a_2_0_true.csv"),
+    Path(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00\my_simulation_pos.xyz"),
     # Path(r"C:\Pfad\zu\minimierung_3.txt"),
 ]
 

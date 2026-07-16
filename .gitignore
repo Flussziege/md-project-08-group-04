@@ -3,10 +3,11 @@ minimization_output/**/*.csv
 minimization_output/**/*.xyz
 /telegram_notify.py
 
-
+results/Long_sim/my_simulation_pos_clusters.html 
 
 
 results/**/*.xyz
 results/**/*.npy
 results/**/*.dat
-#results/**/*.html
+results/**/*.csv
+results/**/*.html

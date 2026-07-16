@@ -257,6 +257,9 @@ for i in range(sim.n_steps):
     energy_trajectory[i+1,2] = instantaneous_temperature(ps)  # instantaneous pressure
     energy_trajectory[i+1,3] = ideal_gas_pressure(ps, sim)    # ideal gas pressure
 
+    if sim_step % 100 ==0:
+        print(f"Zeitpunkt: {time.time()}; Simulationschritt: {sim_step}")
+
     sim_step +=1
 
 #--------------------------------------
