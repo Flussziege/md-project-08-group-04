@@ -12,8 +12,7 @@ import matplotlib.pyplot as plt
 # Eine oder mehrere XYZ-Trajektorien eintragen
 FILE_PATHS = [
     Path(
-        r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00\my_simulation_pos.xyz"
-    ),
+    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00\my_simulation_pos.xyz"    ),
     # Path(r"C:\Pfad\zu\weiterer_trajektorie.xyz"),
 ]
 

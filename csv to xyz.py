@@ -13,7 +13,7 @@ import pandas as pd
 # Eine oder mehrere Minimierungs-CSV-Dateien eintragen
 CSV_FILE_PATHS = [
     Path(
-        r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_cg_armijo_a_2_0_false.csv"
+        r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-15_19-29-17.csv"
     ),
 
     # Path(
@@ -34,7 +34,7 @@ ATOM_SYMBOL = "Ar"
 #
 # Da deine bisherige XYZ-Datei Koordinaten von ungefähr 0 bis 60
 # für eine 6-nm-Box besitzt, ist 10.0 vermutlich korrekt.
-XYZ_POSITION_SCALE = 1.0
+XYZ_POSITION_SCALE = 10.0
 
 # Anzahl der CSV-Zeilen, die gleichzeitig eingelesen werden.
 # Dadurch können auch große Dateien verarbeitet werden.

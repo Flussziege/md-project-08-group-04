@@ -340,4 +340,4 @@ def plot_xyz_trajectory_with_slider(
     fig.show()
 
 make_box_trace(10.0)
-plot_xyz_trajectory_with_slider(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00\my_simulation_pos.xyz", box_length_nm=6, frame_stride=50)
+plot_xyz_trajectory_with_slider(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\minimization_data_2026-07-15_19-29-17.csv", box_length_nm=6, frame_stride=50)

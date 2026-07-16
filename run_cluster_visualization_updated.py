@@ -136,7 +136,7 @@ CLUSTER = True
 # False:
 #   Cluster in jedem Frame neu bestimmen.
 #
-cluster_const = True
+cluster_const = False
 
 
 # ================================================================
@@ -144,7 +144,7 @@ cluster_const = True
 # ================================================================
 
 XYZ_PATH = Path(
-    "results/Long_sim/my_simulation_pos.xyz"
+    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\minimization_output\data_2026-07-15_19-29-17\data_2026-07-15_19-29-17.xyz"
 )
 
 
