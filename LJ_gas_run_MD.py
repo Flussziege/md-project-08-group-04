@@ -269,7 +269,7 @@ for i in range(sim.n_steps):
 
         uhrzeit = datetime.fromtimestamp(timestamp)
 
-        print(f"Zeitpunkt: {uhrzeit.strftime("%d.%m.%Y, %H:%M:%S")}; Simulationschritt: {sim_step}")
+        print(f"Zeitpunkt: {uhrzeit.strftime('%d.%m.%Y, %H:%M:%S')}; Simulationschritt: {sim_step}")
 
     sim_step +=1
 
