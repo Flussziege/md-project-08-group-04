@@ -183,7 +183,18 @@ for i in range(n_particles):
 # set initial positions     
 initialize_positions(ps, sim.box_length, seed=seed)
 
-#EIGENE FUNKTION die das minimiert
+
+#----------------------------------------------------------------
+#   O U T P U T
+#----------------------------------------------------------------
+
+file_name_base = "my_simulation"  # file name for all output files
+
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+output_dir = Path("results") / timestamp
+output_dir.mkdir(parents=True, exist_ok=True)
+
+# EIGENE FUNKTION die das minimiert (speichere Ergebnis im results-Ordner)
 result = minimise_starting_position(
     ps,
     sim,
@@ -196,19 +207,8 @@ result = minimise_starting_position(
     alpha_new_idea=alpha_new_idea
 )
 
-filename = create_minimization_filename("minimization_output")
+filename = create_minimization_filename(output_dir)
 write_minimization_result_to_csv(str(filename), result)
-
-#----------------------------------------------------------------
-#   O U T P U T
-#----------------------------------------------------------------
-
-file_name_base = "my_simulation"  # file name for all output files
-output_dir_min = Path("minimization_output")
-
-timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-output_dir = Path("results") / timestamp
-output_dir.mkdir(parents=True, exist_ok=True)
 
 #----------------------------------------------------------------
 #   
