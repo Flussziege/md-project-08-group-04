@@ -312,7 +312,7 @@ def plot_quantity(
 
     # Achsenbeschriftungen
     ax.set_xlabel(
-        "Minimierungsschritt",
+        "step of minimisation",
         fontsize=label_fontsize
     )
     ax.set_ylabel(
@@ -362,24 +362,32 @@ def plot_quantity(
 
 plot_quantity(
     column="Fmean",
-    ylabel=r"mittlere Kraft $F_{\mathrm{mean}}$",
-    title="Vergleich der mittleren Kraft während der Minimierung",
+    ylabel=r"mean force $F_{\mathrm{mean}}$",
+    title="mean force during minimisation",
     ylim=(-30, 30),
     filename="vergleich_Fmean.png"
 )
 
 plot_quantity(
     column="Frms",
-    ylabel=r"RMS-Kraft $F_{\mathrm{RMS}}$",
-    title="Vergleich der RMS-Kraft während der Minimierung",
+    ylabel=r"rms-force $F_{\mathrm{RMS}}$",
+    title="rms-force during minimisation",
+    ylim=(-30, 30),
+    filename="vergleich_Frms.png"
+)
+
+plot_quantity(
+    column="Fmax",
+    ylabel=r"max-force $F_{\mathrm{max}}$",
+    title="max-force during minimisation",
     ylim=(-30, 30),
     filename="vergleich_Frms.png"
 )
 
 plot_quantity(
     column="E_pot",
-    ylabel=r"potentielle Energie $E_{\mathrm{pot}}$",
-    title="Vergleich der potentiellen Energie während der Minimierung",
+    ylabel=r"potential energy $E_{\mathrm{pot}}$",
+    title="potential energy during minimisatio",
     ylim=(-2600, 30),
     filename="vergleich_Epot.png"
 )
