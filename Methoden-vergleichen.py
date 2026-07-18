@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 from scipy.constants import R
 
 
@@ -54,7 +54,7 @@ methods = [
         "alpha_new_idea": False,
     },
     {
-        "label": "CD w/ Armijo",
+        "label": "CD with Armijo",
         "SD": False,
         "recoursive_alpha": False,
         "alpha_method": "amijo",
@@ -62,7 +62,7 @@ methods = [
         "alpha_new_idea": False,
     },    
     {
-        "label": "CD w/ Armijo & recy. alpha",
+        "label": "CD with Armijo & recy. alpha",
         "SD": False,
         "recoursive_alpha": True,
         "alpha_method": "amijo",
