@@ -53,6 +53,30 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
+        {
+        "label": "CD with Armijo",
+        "SD": False,
+        "recoursive_alpha": False,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },    
+    {
+        "label": "CD with Armijo & recy. alpha",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },
+    {
+        "label": "CD with Armijo & recy. alpha, decr.",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": True,
+    },
 
 ]
 
