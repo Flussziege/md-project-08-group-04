@@ -1,101 +1,252 @@
+"""
+Temperature fluctuation analysis for an NVT molecular dynamics simulation
+==========================================================================
+
+PURPOSE
+-------
+This script reads the temperature trajectory from a NumPy energy file and
+compares the simulated instantaneous temperature with the theoretically
+expected temperature fluctuations of a canonical NVT ensemble.
+
+The energy file is assumed to contain at least four columns:
+
+    column 0: potential energy
+    column 1: kinetic energy
+    column 2: instantaneous temperature
+    column 3: pressure
+
+
+HOW TO USE
+----------
+1. Set ENERGY_FILE to the path of the file:
+
+       my_simulation_ene.npy
+
+2. Set TARGET_TEMPERATURE_K to the thermostat target temperature.
+
+3. Set N_PARTICLES to the number of particles in the simulation.
+
+4. Set DT_PS to the time interval between two stored frames.
+
+5. If the beginning of the simulation is not equilibrated, increase
+   START_FRAME. Only frames from START_FRAME onward are then used for
+   calculating the measured mean and standard deviation.
+
+6. Run the script:
+
+       python temperature_analysis.py
+
+
+THEORETICAL BACKGROUND
+----------------------
+The instantaneous temperature is calculated from the kinetic energy:
+
+                2 E_kin
+    T_inst = -------------
+                f R
+
+where
+
+    E_kin = total kinetic energy,
+    f     = number of kinetic degrees of freedom,
+    R     = molar gas constant.
+
+For a system with N particles in three dimensions:
+
+    f = 3N
+
+If the center-of-mass motion is removed permanently, one may instead use:
+
+    f = 3N - 3
+
+
+In a canonical ensemble, the kinetic energy follows a chi-square distribution.
+Therefore:
+
+    f T_inst
+    --------  ~ chi-square(f)
+    T_target
+
+
+The theoretical confidence interval of the instantaneous temperature is:
+
+                      T_target
+    T_lower = -------------------------- chi2(alpha / 2, f)
+                          f
+
+
+                      T_target
+    T_upper = -------------------------- chi2(1 - alpha / 2, f)
+                          f
+
+where
+
+    alpha = 1 - confidence level.
+
+
+The expected standard deviation of the instantaneous temperature is:
+
+                                2
+    sigma_T = T_target sqrt( ------- )
+                                f
+
+
+IMPORTANT
+---------
+Successive MD frames are usually correlated. Therefore, the fraction of frames
+inside the theoretical interval is useful as a diagnostic, but it is not an
+independent statistical hypothesis test.
+"""
+
+
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.stats import chi2
 
 
 # ================================================================
-# EINGABEN
+# INPUT PARAMETERS
 # ================================================================
 
 ENERGY_FILE = Path(
-    "results/Long_sim_120/my_simulation_ene.npy"
+    "results/Long_sim/my_simulation_ene.npy"
 )
 
-# Solltemperatur des Thermostaten
-TARGET_TEMPERATURE_K = 120.0
+# Thermostat target temperature in kelvin
+TARGET_TEMPERATURE_K = 80.0
 
-# Anzahl der Teilchen
+# Number of particles
 N_PARTICLES = 500
 
-# Zeitschritt zwischen zwei gespeicherten Frames in ps
+# Time interval between two stored frames in picoseconds
 DT_PS = 0.001
 
-# Konfidenzbereich:
-# 0.95 entspricht einem theoretischen 95-%-Bereich
+# Theoretical confidence interval
+# 0.95 corresponds to a theoretical 95% interval
 CONFIDENCE_LEVEL = 0.95
 
-# Optional:
-# Nur jeden n-ten Wert plotten, damit der Plot bei langen
-# Simulationen nicht zu groß wird.
+# Plot only every nth value to reduce the number of plotted points
 PLOT_STRIDE = 1
 
-# Optional:
-# Anfang der Simulation im Plot ausblenden.
-# Die Zeitachse bleibt trotzdem korrekt.
+# Ignore the first frames in the statistical analysis and plot
 START_FRAME = 0
 
 
 # ================================================================
-# DATEI EINLESEN
+# PLOT APPEARANCE
 # ================================================================
+
+TITLE_FONT_SIZE = 20
+AXIS_LABEL_FONT_SIZE = 17
+TICK_FONT_SIZE = 14
+LEGEND_FONT_SIZE = 13
+
+FIGURE_WIDTH = 12
+FIGURE_HEIGHT = 7
+
+# Set general matplotlib font sizes
+plt.rcParams.update(
+    {
+        "font.size": 14,
+        "axes.titlesize": TITLE_FONT_SIZE,
+        "axes.labelsize": AXIS_LABEL_FONT_SIZE,
+        "xtick.labelsize": TICK_FONT_SIZE,
+        "ytick.labelsize": TICK_FONT_SIZE,
+        "legend.fontsize": LEGEND_FONT_SIZE,
+    }
+)
+
+
+# ================================================================
+# LOAD ENERGY FILE
+# ================================================================
+
+if not ENERGY_FILE.exists():
+    raise FileNotFoundError(
+        f"Energy file not found:\n{ENERGY_FILE.resolve()}"
+    )
 
 energy_data = np.load(ENERGY_FILE)
 
 if energy_data.ndim != 2 or energy_data.shape[1] < 4:
     raise ValueError(
-        "Die Energiedatei muss mindestens vier Spalten besitzen:\n"
-        "E_pot, E_kin, T, P"
+        "The energy file must be a two-dimensional array with at least "
+        "four columns:\n"
+        "potential energy, kinetic energy, temperature, pressure"
     )
 
-# Spalten:
-# 0 = potentielle Energie
-# 1 = kinetische Energie
-# 2 = Temperatur
-# 3 = Druck
+if N_PARTICLES <= 0:
+    raise ValueError("N_PARTICLES must be greater than zero.")
+
+if DT_PS <= 0:
+    raise ValueError("DT_PS must be greater than zero.")
+
+if not 0.0 < CONFIDENCE_LEVEL < 1.0:
+    raise ValueError(
+        "CONFIDENCE_LEVEL must be between 0 and 1."
+    )
+
+if PLOT_STRIDE < 1:
+    raise ValueError("PLOT_STRIDE must be at least 1.")
+
+
+# Columns:
+# 0 = potential energy
+# 1 = kinetic energy
+# 2 = instantaneous temperature
+# 3 = pressure
 temperature_K = energy_data[:, 2]
 
 n_frames = len(temperature_K)
+
+if not 0 <= START_FRAME < n_frames:
+    raise ValueError(
+        f"START_FRAME must be between 0 and {n_frames - 1}."
+    )
 
 time_ps = np.arange(n_frames) * DT_PS
 
 
 # ================================================================
-# FREIHEITSGRADE
+# DEGREES OF FREEDOM
 # ================================================================
 
-# Das entspricht deiner momentanen Temperaturberechnung:
+# This corresponds to the temperature definition:
 #
-# T = 2 E_kin / (3 N R)
+#                 2 E_kin
+#     T_inst = ----------------
+#                 3 N R
 #
 degrees_of_freedom = 3 * N_PARTICLES
 
-# Falls die Schwerpunktsbewegung dauerhaft entfernt und nicht erneut
-# durch das Thermostat angeregt wird, könnte man alternativ verwenden:
+# If the center-of-mass motion is permanently removed and is not
+# reintroduced by the thermostat, use:
 #
 # degrees_of_freedom = 3 * N_PARTICLES - 3
 
 
 # ================================================================
-# THEORETISCH ERWARTETER TEMPERATURBEREICH
+# THEORETICAL TEMPERATURE INTERVAL
 # ================================================================
 
 alpha = 1.0 - CONFIDENCE_LEVEL
 
-# Für ein kanonisches Ensemble gilt:
+# In a canonical ensemble:
 #
-# degrees_of_freedom * T_inst / T_target
-#     ~ Chi-Quadrat(degrees_of_freedom)
+#     degrees_of_freedom * T_inst / T_target
+#         ~ chi-square(degrees_of_freedom)
 #
-# Daraus ergeben sich die Quantile für T_inst.
+# The lower and upper temperature limits are obtained from the
+# corresponding chi-square quantiles.
 
 lower_temperature_K = (
     TARGET_TEMPERATURE_K
     / degrees_of_freedom
     * chi2.ppf(
         alpha / 2.0,
-        df=degrees_of_freedom
+        df=degrees_of_freedom,
     )
 )
 
@@ -104,11 +255,14 @@ upper_temperature_K = (
     / degrees_of_freedom
     * chi2.ppf(
         1.0 - alpha / 2.0,
-        df=degrees_of_freedom
+        df=degrees_of_freedom,
     )
 )
 
-# Erwartete Standardabweichung der momentanen Temperatur
+# Expected standard deviation:
+#
+#     sigma_T = T_target * sqrt(2 / degrees_of_freedom)
+#
 expected_temperature_std_K = (
     TARGET_TEMPERATURE_K
     * np.sqrt(
@@ -118,13 +272,15 @@ expected_temperature_std_K = (
 
 
 # ================================================================
-# DATEN FÜR DEN PLOT AUSWÄHLEN
+# SELECT DATA FOR ANALYSIS AND PLOTTING
 # ================================================================
+
+analysis_temperature_K = temperature_K[START_FRAME:]
 
 plot_indices = np.arange(
     START_FRAME,
     n_frames,
-    PLOT_STRIDE
+    PLOT_STRIDE,
 )
 
 plot_time_ps = time_ps[plot_indices]
@@ -132,130 +288,171 @@ plot_temperature_K = temperature_K[plot_indices]
 
 
 # ================================================================
-# ERGEBNISSE AUSGEBEN
+# CALCULATE MEASURED STATISTICS
 # ================================================================
 
-print("=" * 70)
-print("THEORETISCH ERWARTETER TEMPERATURBEREICH")
-print("=" * 70)
-
-print(f"Teilchenzahl:             {N_PARTICLES}")
-print(f"Freiheitsgrade:          {degrees_of_freedom}")
-print(f"Solltemperatur:          {TARGET_TEMPERATURE_K:.3f} K")
-print(
-    f"Konfidenzbereich:        "
-    f"{100 * CONFIDENCE_LEVEL:.1f} %"
-)
-print(
-    f"Untere Grenze:           "
-    f"{lower_temperature_K:.3f} K"
-)
-print(
-    f"Obere Grenze:            "
-    f"{upper_temperature_K:.3f} K"
-)
-print(
-    f"Erwartete Standardabw.:  "
-    f"{expected_temperature_std_K:.3f} K"
+measured_mean_K = np.mean(
+    analysis_temperature_K
 )
 
-measured_mean = np.mean(
-    temperature_K[START_FRAME:]
+measured_std_K = np.std(
+    analysis_temperature_K,
+    ddof=1,
 )
 
-measured_std = np.std(
-    temperature_K[START_FRAME:],
-    ddof=1
-)
-
-fraction_inside = np.mean(
+inside_interval = (
     (
-        temperature_K[START_FRAME:]
+        analysis_temperature_K
         >= lower_temperature_K
     )
     & (
-        temperature_K[START_FRAME:]
+        analysis_temperature_K
         <= upper_temperature_K
     )
 )
 
-print()
+fraction_inside = np.mean(
+    inside_interval
+)
+
+
+# ================================================================
+# PRINT RESULTS
+# ================================================================
+
+print("=" * 72)
+print("THEORETICAL TEMPERATURE FLUCTUATION ANALYSIS")
+print("=" * 72)
+
+print(f"Energy file:                  {ENERGY_FILE}")
+print(f"Number of particles:          {N_PARTICLES}")
+print(f"Degrees of freedom:           {degrees_of_freedom}")
+print(f"Thermostat target:            {TARGET_TEMPERATURE_K:.3f} K")
 print(
-    f"Gemessener Mittelwert:   "
-    f"{measured_mean:.3f} K"
+    f"Confidence level:             "
+    f"{100 * CONFIDENCE_LEVEL:.1f} %"
 )
 print(
-    f"Gemessene Standardabw.:  "
-    f"{measured_std:.3f} K"
+    f"Theoretical lower limit:      "
+    f"{lower_temperature_K:.3f} K"
 )
 print(
-    f"Anteil innerhalb Range:  "
+    f"Theoretical upper limit:      "
+    f"{upper_temperature_K:.3f} K"
+)
+print(
+    f"Expected standard deviation:  "
+    f"{expected_temperature_std_K:.3f} K"
+)
+
+print("-" * 72)
+
+print(
+    f"Analyzed frames:              "
+    f"{len(analysis_temperature_K)}"
+)
+print(
+    f"Measured mean temperature:    "
+    f"{measured_mean_K:.3f} K"
+)
+print(
+    f"Measured standard deviation:  "
+    f"{measured_std_K:.3f} K"
+)
+print(
+    f"Frames inside interval:       "
     f"{100 * fraction_inside:.2f} %"
 )
 
-print("=" * 70)
+print("=" * 72)
 
 
 # ================================================================
 # PLOT
 # ================================================================
 
-plt.figure(figsize=(11, 6))
+fig, ax = plt.subplots(
+    figsize=(
+        FIGURE_WIDTH,
+        FIGURE_HEIGHT,
+    )
+)
 
-# Erwarteter Temperaturbereich
-plt.fill_between(
+# Theoretically expected temperature interval
+ax.fill_between(
     plot_time_ps,
     lower_temperature_K,
     upper_temperature_K,
     alpha=0.25,
     label=(
-        f"theoretischer "
-        f"{100 * CONFIDENCE_LEVEL:.0f}-%-Bereich"
-    )
+        f"Theoretical "
+        f"{100 * CONFIDENCE_LEVEL:.0f}% interval"
+    ),
 )
 
-# Simulierte Temperatur
-plt.plot(
+# Simulated instantaneous temperature
+ax.plot(
     plot_time_ps,
     plot_temperature_K,
-    linewidth=0.8,
-    label="simulierte Temperatur"
+    linewidth=1.0,
+    label="Simulated instantaneous temperature",
 )
 
-# Solltemperatur
-plt.axhline(
+# Thermostat target temperature
+ax.axhline(
     TARGET_TEMPERATURE_K,
     linestyle="--",
-    linewidth=1.5,
+    linewidth=2.0,
     label=(
-        f"Solltemperatur "
+        f"Target temperature: "
         f"{TARGET_TEMPERATURE_K:.1f} K"
-    )
+    ),
 )
 
-# Grenzen zusätzlich als Linien
-plt.axhline(
+# Lower and upper theoretical limits
+ax.axhline(
     lower_temperature_K,
     linestyle=":",
-    linewidth=1
+    linewidth=1.5,
 )
 
-plt.axhline(
+ax.axhline(
     upper_temperature_K,
     linestyle=":",
-    linewidth=1
+    linewidth=1.5,
 )
 
-plt.xlabel("Zeit / ps")
-plt.ylabel("Temperatur / K")
-
-plt.title(
-    "Momentane Temperatur und theoretisch erwarteter "
-    "kanonischer Schwankungsbereich"
+ax.set_xlabel(
+    "Time / ps",
+    fontsize=AXIS_LABEL_FONT_SIZE,
 )
 
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
+ax.set_ylabel(
+    "Instantaneous temperature / K",
+    fontsize=AXIS_LABEL_FONT_SIZE,
+)
+
+ax.set_title(
+    "Instantaneous Temperature and the Expected "
+    "Canonical Fluctuation Interval",
+    fontsize=TITLE_FONT_SIZE,
+    pad=15,
+)
+
+ax.tick_params(
+    axis="both",
+    labelsize=TICK_FONT_SIZE,
+)
+
+ax.grid(
+    True,
+    alpha=0.4,
+)
+
+ax.legend(
+    fontsize=LEGEND_FONT_SIZE,
+)
+
+fig.tight_layout()
 
 plt.show()

@@ -143,17 +143,22 @@ cluster_const = True
 #   D A T E I P F A D
 # ================================================================
 
-XYZ_PATH = Path(
-    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-17_10-24-43\my_simulation_pos.xyz"
+XYZ_PATH = (
+    Path.home()
+    / "Documents"
+    / "VSCODE"
+    / "moldyn_proj"
+    / "md-project"
+    / "results"
+    / "Long_sim_5"
+    / "my_simulation_pos.xyz"
 )
-
-
 # ================================================================
 #   S I M U L A T I O N S P A R A M E T E R
 # ================================================================
 
 # Boxlänge aus der Simulation in nm
-BOX_LENGTH_NM = 10.0
+BOX_LENGTH_NM = 6.0
 
 # Zeitabstand zwischen zwei gespeicherten XYZ-Frames in ps.
 #
