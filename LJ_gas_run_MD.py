@@ -318,7 +318,6 @@ plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("E_pot [kJ/mol]", fontsize=14)
 
 plt.savefig(output_dir / f"{file_name_base}_Epot.png", dpi=300, bbox_inches='tight')
-plt.show()
 
 #
 # kinetic energy
@@ -333,7 +332,6 @@ plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("E_kin [kJ/mol]", fontsize=14)
 
 plt.savefig(output_dir / f"{file_name_base}_Ekin.png", dpi=300, bbox_inches='tight')
-plt.show()
 
 #
 # temperature
@@ -348,7 +346,6 @@ plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("T [K]", fontsize=14)
 
 plt.savefig(output_dir / f"{file_name_base}_T.png", dpi=300, bbox_inches='tight')
-plt.show()
 
 #
 # pressure
@@ -363,7 +360,7 @@ plt.xlabel("time [ps]", fontsize=14)
 plt.ylabel("P [Pa]", fontsize=14)
 
 plt.savefig(output_dir / f"{file_name_base}_P.png", dpi=300, bbox_inches='tight')
-plt.show()
+
 
 
 #--------------------------------------
