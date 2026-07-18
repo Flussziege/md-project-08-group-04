@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 from scipy.constants import R
 
 
@@ -53,8 +53,8 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
-    {
-        "label": "CD w/ Armijo",
+        {
+        "label": "CD with Armijo",
         "SD": False,
         "recoursive_alpha": False,
         "alpha_method": "amijo",
@@ -62,7 +62,7 @@ methods = [
         "alpha_new_idea": False,
     },    
     {
-        "label": "CD w/ Armijo & recy. alpha",
+        "label": "CD with Armijo & recy. alpha",
         "SD": False,
         "recoursive_alpha": True,
         "alpha_method": "amijo",
@@ -77,31 +77,23 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": True,
     },
+
 ]
 
 """
 ==================================================
 12
 
-methods = [
-        {
-        "label": "SD",
-        "SD": True,
-        "recoursive_alpha": True,
-        "alpha_method": "line_search",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },
-        {
-        "label": "CD w/ Armijo",
+    {
+        "label": "CD with Armijo",
         "SD": False,
         "recoursive_alpha": False,
         "alpha_method": "amijo",
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
-    },
+    },    
     {
-        "label": "CD w/ Armijo & recy. alpha",
+        "label": "CD with Armijo & recy. alpha",
         "SD": False,
         "recoursive_alpha": True,
         "alpha_method": "amijo",
@@ -116,50 +108,6 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": True,
     },
-]
-
-
-methods = [
-    {
-        "label": "CG Armijo - alpha-1.1",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 1.1,
-    },
-    {
-        "label": "CG Armijo - alpha-1.3",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 1.3,
-    },
-    {
-        "label": "CG Armijo - alpha-1.6",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 1.6,
-    },
-    {
-        "label": "CG Armijo - alpha-2.0",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-    },
-]
-
-    {
-        "label": "CG armijo - a 2.0 - True",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": True,
-    },
-
-
 """
 
 
@@ -312,7 +260,7 @@ def plot_quantity(
 
     # Achsenbeschriftungen
     ax.set_xlabel(
-        "Minimierungsschritt",
+        "step of minimisation",
         fontsize=label_fontsize
     )
     ax.set_ylabel(
@@ -362,24 +310,32 @@ def plot_quantity(
 
 plot_quantity(
     column="Fmean",
-    ylabel=r"mittlere Kraft $F_{\mathrm{mean}}$",
-    title="Vergleich der mittleren Kraft während der Minimierung",
+    ylabel=r"mean force $F_{\mathrm{mean}}$",
+    title="mean force during minimisation",
     ylim=(-30, 30),
     filename="vergleich_Fmean.png"
 )
 
 plot_quantity(
     column="Frms",
-    ylabel=r"RMS-Kraft $F_{\mathrm{RMS}}$",
-    title="Vergleich der RMS-Kraft während der Minimierung",
+    ylabel=r"rms-force $F_{\mathrm{RMS}}$",
+    title="rms-force during minimisation",
+    ylim=(-30, 30),
+    filename="vergleich_Frms.png"
+)
+
+plot_quantity(
+    column="Fmax",
+    ylabel=r"max-force $F_{\mathrm{max}}$",
+    title="max-force during minimisation",
     ylim=(-30, 30),
     filename="vergleich_Frms.png"
 )
 
 plot_quantity(
     column="E_pot",
-    ylabel=r"potentielle Energie $E_{\mathrm{pot}}$",
-    title="Vergleich der potentiellen Energie während der Minimierung",
+    ylabel=r"potential energy $E_{\mathrm{pot}}$",
+    title="potential energy during minimisation",
     ylim=(-2600, 30),
     filename="vergleich_Epot.png"
 )

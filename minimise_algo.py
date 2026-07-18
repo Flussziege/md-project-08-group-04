@@ -2,6 +2,7 @@ import csv
 import numpy as np
 from pathlib import Path
 from datetime import datetime
+import shutil
 
 import LJ_gas
 
@@ -365,6 +366,15 @@ def write_minimization_result_to_csv(filename, result):
             writer.writerow(row)
 
     print(f"CSV-Datei erfolgreich erstellt und unter {filename} gespeichert.")
+
+        # Zusätzlich eine Kopie in minimization_output speichern
+    comparison_dir = Path("minimization_output")
+    comparison_dir.mkdir(parents=True, exist_ok=True)
+
+    comparison_file = comparison_dir / filename.name
+    shutil.copy2(filename, comparison_file)
+
+    print(f"Kopie gespeichert unter {comparison_file}")
 
     return filename
     
