@@ -14,7 +14,7 @@ from cluster_functions import read_xyz_trajectory
 # ================================================================
 
 XYZ_PATH = Path(
-    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00\my_simulation_pos-5K.xyz"
+    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-16_18-51-01\my_simulation_pos-300K.xyz"
 )
 
 # Boxlänge der kubischen Simulationsbox in nm
