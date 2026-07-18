@@ -11,12 +11,20 @@ from cluster_functions import read_xyz_trajectory
 # EINGABEN
 # ================================================================
 
-XYZ_PATH = Path(
-    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00\my_simulation_pos.xyz"
+XYZ_PATH = (
+    Path.home()
+    / "Documents"
+    / "VSCODE"
+    / "moldyn_proj"
+    / "md-project"
+    / "results"
+    / "Long_sim_300"
+    / "my_simulation_pos.xyz"
 )
 
+
 # Boxlänge in nm
-BOX_LENGTH_NM = 5.0
+BOX_LENGTH_NM = 6.0
 
 # Zeit zwischen zwei tatsächlich gespeicherten XYZ-Frames.
 #
@@ -33,7 +41,7 @@ DT_SAVED_FRAME_PS = 0.001
 # ================================================================
 
 # Alle Frames davor werden nicht ausgewertet.
-START_FRAME = 5000
+START_FRAME = 0
 
 # None bedeutet: bis zum Ende
 STOP_FRAME = None
@@ -88,7 +96,7 @@ N_LAG_POINTS = 250
 #
 # Kleiner:
 #   langsamer, aber bessere Statistik
-ORIGIN_STRIDE = 20
+ORIGIN_STRIDE = 10
 
 # Rechenblöcke zur Verringerung des Speicherbedarfs
 ORIGIN_BATCH_SIZE = 200
@@ -106,8 +114,8 @@ ORIGIN_BATCH_SIZE = 200
 # Für keinen Fit:
 # FIT_START_PS = None
 # FIT_END_PS = None
-FIT_START_PS = 5.0
-FIT_END_PS = 15.0
+FIT_START_PS = 0.0
+FIT_END_PS = 30.0
 
 
 # ================================================================
