@@ -77,16 +77,7 @@ from scipy.spatial import cKDTree
 # INPUT PARAMETERS
 # ================================================================
 
-XYZ_PATH = (
-    Path.home()
-    / "Documents"
-    / "VSCODE"
-    / "moldyn_proj"
-    / "md-project"
-    / "results"
-    / "Long_sim"
-    / "my_simulation_pos.xyz"
-)
+XYZ_PATH = Path(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-18_12-15-56\my_simulation_pos.xyz")
 
 # Cubic simulation-box length in nm
 BOX_LENGTH_NM = 6.0
@@ -115,7 +106,7 @@ R_MAX_NM = None
 XYZ_COORDINATES_IN_ANGSTROM = True
 
 # Save calculated data and figure
-SAVE_CSV = True
+SAVE_CSV = False
 SAVE_PLOT = True
 
 CSV_PATH = XYZ_PATH.with_name(
