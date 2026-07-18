@@ -10,12 +10,12 @@ from pathlib import Path
 n_particles = 500
 mass_argon = 39.95              # mass in u = 1e-3 kg/mol
 sigma_argon = 0.34              # sigma in nm
-epsilon_argon = 200 * R * 1e-3  # epsilon in kJ/mol
+epsilon_argon = 120 * R * 1e-3  # epsilon in kJ/mol
 
 # simulation
 dt = 0.001
 n_steps = 30000
-temperature = 80
+temperature = 180
 box_length = 6
 tau_thermostat = 1
 rij_min = 1e-2
