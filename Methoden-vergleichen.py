@@ -311,7 +311,7 @@ plot_quantity(
 plot_quantity(
     column="E_pot",
     ylabel=r"potential energy $E_{\mathrm{pot}}$",
-    title="potential energy during minimisatio",
+    title="potential energy during minimisation",
     ylim=(-2600, 30),
     filename="vergleich_Epot.png"
 )
