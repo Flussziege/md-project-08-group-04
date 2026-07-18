@@ -232,65 +232,99 @@ for label, path in csv_paths.items():
 #   P L O T - F U N K T I O N
 # ----------------------------------------------------------------
 
-def plot_quantity(column, ylabel, title, ylim=None, logy=False):
-    plt.figure(figsize=(8, 5))
+
+def plot_quantity(
+    column,
+    ylabel,
+    title,
+    ylim=None,
+    logy=False,
+    filename=None,
+    label_fontsize=15,
+    title_fontsize=17,
+    tick_fontsize=13,
+    legend_fontsize=12
+):
+    fig, ax = plt.subplots(figsize=(8, 5))
 
     for label, df in data.items():
-        plt.plot(
+        ax.plot(
             df["step"],
             df[column],
             label=label,
             linewidth=line_width
         )
 
-    plt.xlabel("Minimierungsschritt")
-    plt.ylabel(ylabel)
-    plt.title(title)
+    # Achsenbeschriftungen
+    ax.set_xlabel(
+        "Minimierungsschritt",
+        fontsize=label_fontsize
+    )
+    ax.set_ylabel(
+        ylabel,
+        fontsize=label_fontsize
+    )
+
+    # Titel
+    ax.set_title(
+        title,
+        fontsize=title_fontsize,
+        pad=12
+    )
+
+    # Zahlen an den Achsen vergrößern
+    ax.tick_params(
+        axis="both",
+        labelsize=tick_fontsize
+    )
 
     if ylim is not None:
-        plt.ylim(*ylim)
+        ax.set_ylim(*ylim)
 
     if logy:
-        plt.yscale("log")
+        ax.set_yscale("log")
 
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
+    ax.grid(True, alpha=0.4)
+
+    ax.legend(
+        fontsize=legend_fontsize
+    )
+
+    fig.tight_layout()
+
+    # Graph speichern
+    if filename is not None:
+        fig.savefig(
+            filename,
+            dpi=300,
+            bbox_inches="tight"
+        )
+
     plt.show()
-
-
 # ----------------------------------------------------------------
 #   V E R G L E I C H S P L O T S
 # ----------------------------------------------------------------
 
 plot_quantity(
-    column="Fmax",
-    ylabel="maximale Kraft $F_{max}$",
-    title="Vergleich der maximalen Kraft während der Minimierung",
-    logy=False,
-    ylim=(-30, 30)
-)
-
-plot_quantity(
     column="Fmean",
-    ylabel="mittlere Kraft $F_{mean}$",
+    ylabel=r"mittlere Kraft $F_{\mathrm{mean}}$",
     title="Vergleich der mittleren Kraft während der Minimierung",
-    logy=False,
-    ylim=(-30, 30)
+    ylim=(-30, 30),
+    filename="vergleich_Fmean.png"
 )
 
 plot_quantity(
     column="Frms",
-    ylabel="RMS-Kraft $F_{RMS}$",
+    ylabel=r"RMS-Kraft $F_{\mathrm{RMS}}$",
     title="Vergleich der RMS-Kraft während der Minimierung",
-    logy=False,
-    ylim=(-30, 30)
+    ylim=(-30, 30),
+    filename="vergleich_Frms.png"
 )
 
 plot_quantity(
     column="E_pot",
-    ylabel="potentielle Energie $E_{pot}$",
+    ylabel=r"potentielle Energie $E_{\mathrm{pot}}$",
     title="Vergleich der potentiellen Energie während der Minimierung",
-    logy=False,
-    ylim=(-800, 30)
+    ylim=(-2600, 30),
+    filename="vergleich_Epot.png"
 )
