@@ -53,6 +53,13 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
+
+]
+
+"""
+==================================================
+12
+
     {
         "label": "CD with Armijo",
         "SD": False,
@@ -77,89 +84,6 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": True,
     },
-]
-
-"""
-==================================================
-12
-
-methods = [
-        {
-        "label": "SD",
-        "SD": True,
-        "recoursive_alpha": True,
-        "alpha_method": "line_search",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },
-        {
-        "label": "CD w/ Armijo",
-        "SD": False,
-        "recoursive_alpha": False,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },
-    {
-        "label": "CD w/ Armijo & recy. alpha",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },
-    {
-        "label": "CD with Armijo & recy. alpha, decr.",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": True,
-    },
-]
-
-
-methods = [
-    {
-        "label": "CG Armijo - alpha-1.1",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 1.1,
-    },
-    {
-        "label": "CG Armijo - alpha-1.3",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 1.3,
-    },
-    {
-        "label": "CG Armijo - alpha-1.6",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 1.6,
-    },
-    {
-        "label": "CG Armijo - alpha-2.0",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-    },
-]
-
-    {
-        "label": "CG armijo - a 2.0 - True",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": True,
-    },
-
-
 """
 
 
