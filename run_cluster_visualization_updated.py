@@ -150,7 +150,7 @@ XYZ_PATH = (
     / "moldyn_proj"
     / "md-project"
     / "results"
-    / "Long_sim_5"
+    / "Long_sim_300"
     / "my_simulation_pos.xyz"
 )
 # ================================================================
@@ -214,7 +214,7 @@ SUMMARY_CSV_PATH = None
 # Nur jeden n-ten Frame anzeigen.
 #
 # Bei großen Trajektorien beispielsweise 10, 20, 50 oder 100.
-PLOT_FRAME_STRIDE = 20
+PLOT_FRAME_STRIDE = 100
 
 # Größe der dargestellten Teilchen
 MARKER_SIZE = 4
