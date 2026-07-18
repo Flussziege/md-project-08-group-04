@@ -8,7 +8,7 @@ import telegram_notify
 #   P A R A M E T E R S
 #----------------------------------------------------------------
 # system
-n_particles = 500
+n_particles = 1000
 mass_argon = 39.95              # mass in u = 1e-3 kg/mol
 sigma_argon = 0.34              # sigma in nm
 epsilon_argon = 120 * R * 1e-3  # epsilon in kJ/mol
@@ -16,8 +16,8 @@ epsilon_argon = 120 * R * 1e-3  # epsilon in kJ/mol
 # simulation
 dt = 0.001
 n_steps = 30000
-temperature = 300
-box_length = 6
+temperature = 80
+box_length = 10
 tau_thermostat = 1
 rij_min = 1e-2
 NVT = True

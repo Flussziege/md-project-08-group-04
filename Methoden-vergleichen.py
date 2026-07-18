@@ -13,7 +13,7 @@ from scipy.constants import R
 #   E I N S T E L L U N G E N
 # ----------------------------------------------------------------
 
-project_dir = Path(r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04")
+project_dir = Path("/Users/arntvonbodelschwingh/moritz_code_speicher/md-project-08-group-04")
 output_dir = project_dir / "minimization_output"
 
 use_existing_files = True   # True: vorhandene Dateien benutzen
@@ -27,15 +27,15 @@ line_width = 0.9            # dünnere Linien im Plot
 # ----------------------------------------------------------------
 
 base_args = {
-    "n_particles": 200,
+    "n_particles": 500,
     "mass_argon": 39.95,
     "sigma_argon": 0.34,
     "epsilon_argon": 120 * R * 1e-3,
 
     "dt": 0.001,
     "n_steps": 1000,
-    "temperature": 50,
-    "box_length": 5,
+    "temperature": 80,
+    "box_length": 6,
     "tau_thermostat": 1,
     "rij_min": 1e-2,
 
@@ -45,14 +45,6 @@ base_args = {
 }
 
 methods = [
-    {
-        "label": "CG line search - a 2.0 - True",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "line_search",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": True,
-    },
         {
         "label": "SD",
         "SD": True,
@@ -61,9 +53,72 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
+    {
+        "label": "CD w/ Armijo",
+        "SD": False,
+        "recoursive_alpha": False,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },    
+    {
+        "label": "CD w/ Armijo & recy. alpha",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },
+    {
+        "label": "CD with Armijo & recy. alpha, decr.",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": True,
+    },
 ]
 
 """
+==================================================
+12
+
+methods = [
+        {
+        "label": "SD",
+        "SD": True,
+        "recoursive_alpha": True,
+        "alpha_method": "line_search",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },
+        {
+        "label": "CD w/ Armijo",
+        "SD": False,
+        "recoursive_alpha": False,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },
+    {
+        "label": "CD w/ Armijo & recy. alpha",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },
+    {
+        "label": "CD with Armijo & recy. alpha, decr.",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": True,
+    },
+]
+
+
 methods = [
     {
         "label": "CG Armijo - alpha-1.1",
