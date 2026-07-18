@@ -144,7 +144,7 @@ cluster_const = True
 # ================================================================
 
 XYZ_PATH = Path(
-    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-16_18-51-01\my_simulation_pos.xyz"
+    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-17_10-24-43\my_simulation_pos.xyz"
 )
 
 
@@ -153,7 +153,7 @@ XYZ_PATH = Path(
 # ================================================================
 
 # Boxlänge aus der Simulation in nm
-BOX_LENGTH_NM = 6.0
+BOX_LENGTH_NM = 10.0
 
 # Zeitabstand zwischen zwei gespeicherten XYZ-Frames in ps.
 #
