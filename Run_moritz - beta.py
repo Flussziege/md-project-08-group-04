@@ -16,7 +16,7 @@ epsilon_argon = 120 * R * 1e-3  # epsilon in kJ/mol
 # simulation
 dt = 0.001
 n_steps = 30000
-temperature = 100
+temperature = 150
 box_length = 6
 tau_thermostat = 1
 rij_min = 1e-2
