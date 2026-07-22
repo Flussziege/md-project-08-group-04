@@ -65,22 +65,9 @@ TRAJECTORIES = [
     },
     {
         "path": Path(
-            r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik"
-            r"\md-project-08-group-04\results"
-            r"\2026-07-15_19-30-00-50K"
-            r"\my_simulation_pos-50K.xyz"
+            r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-16_18-51-01-300K\my_simulation_pos-300K.xyz"
         ),
-        "label": "50 K",
-        "box_length_nm": 6.0,
-    },
-    {
-        "path": Path(
-            r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik"
-            r"\md-project-08-group-04\results"
-            r"\2026-07-15_19-30-00-100K"
-            r"\my_simulation_pos-100K.xyz"
-        ),
-        "label": "100 K",
+        "label": "300 K",
         "box_length_nm": 6.0,
     },
 ]
@@ -142,7 +129,7 @@ SAVE_COMBINED_RDF_DIAGNOSTIC = True
 #
 # The conventional scientific representation is "linear".
 # "quadratic" visually emphasizes large peaks.
-Y_AXIS_SCALE = "quadratic"
+Y_AXIS_SCALE = "square_root"
 
 # Add each automatically selected cutoff to its curve label.
 SHOW_CUTOFF_IN_LEGEND = True
