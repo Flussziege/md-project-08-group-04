@@ -69,7 +69,7 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
-    {
+    g{
         "label": "CD with Armijo & recy. alpha, decr.",
         "SD": False,
         "recoursive_alpha": True,
