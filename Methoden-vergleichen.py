@@ -45,32 +45,8 @@ base_args = {
 }
 
 methods = [
-        {
-        "label": "SD",
-        "SD": True,
-        "recoursive_alpha": True,
-        "alpha_method": "line_search",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },
-        {
-        "label": "CD with Armijo",
-        "SD": False,
-        "recoursive_alpha": False,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },    
     {
-        "label": "CD with Armijo & recy. alpha",
-        "SD": False,
-        "recoursive_alpha": True,
-        "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
-        "alpha_new_idea": False,
-    },
-    {
-        "label": "CD with Armijo & recy. alpha, decr.",
+        "label": "CD with Armijo & recy. alpha, decr. 100k",
         "SD": False,
         "recoursive_alpha": True,
         "alpha_method": "amijo",
