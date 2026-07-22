@@ -150,7 +150,7 @@ XYZ_PATH = (
     / "moldyn_proj"
     / "md-project"
     / "results"
-    / "Long_sim"
+    / "Long_sim_80"
     / "my_simulation_pos.xyz"
 )
 # ================================================================
@@ -184,7 +184,7 @@ MINIMUM_CLUSTER_SIZE = 15
 # Nur jeden n-ten XYZ-Frame analysieren.
 #
 # Empfohlen: 1
-ANALYSIS_FRAME_STRIDE = 1
+ANALYSIS_FRAME_STRIDE = 50
 
 
 # ================================================================
