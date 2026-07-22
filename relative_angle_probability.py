@@ -1,3 +1,40 @@
+"""
+Relative-angle distribution comparison for multiple XYZ trajectories
+====================================================================
+
+PURPOSE
+-------
+This script compares the local angular structure of several molecular-
+dynamics trajectories stored in XYZ format.
+
+For every trajectory, it:
+
+1. reads and selects trajectory frames,
+2. determines the first coordination-shell cutoff from the first minimum
+   of the radial distribution function (unless a fixed cutoff is supplied),
+3. calculates the relative-angle probability density P(theta),
+4. calculates the isotropy-corrected angular correlation
+
+       g_theta(theta) = P(theta) / P_0(theta),
+
+5. saves one CSV file per trajectory, and
+6. draws shared comparison plots for all trajectories.
+
+EXPECTED UNITS
+--------------
+The box lengths and all internal calculations use nanometres.
+
+If the XYZ coordinates are stored in angstroms, set
+XYZ_COORDINATES_IN_ANGSTROM = True:
+
+    1 angstrom = 0.1 nm
+
+DEPENDENCY
+----------
+The function read_xyz_trajectory is imported from cluster_functions.py.
+That file must be importable from the current Python environment.
+"""
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -10,101 +47,147 @@ from cluster_functions import read_xyz_trajectory
 
 
 # ================================================================
-#   I N P U T   P A R A M E T E R S
+# INPUT PARAMETERS
 # ================================================================
 
-XYZ_PATH = Path(
-    r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00-5K\my_simulation_pos-5K.xyz"
-)
+# Add or remove trajectory dictionaries as needed.
+# Replace the example paths with the actual paths on your computer.
+TRAJECTORIES = [
+    {
+        "path": Path(
+            r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik"
+            r"\md-project-08-group-04\results"
+            r"\2026-07-15_19-30-00-5K"
+            r"\my_simulation_pos-5K.xyz"
+        ),
+        "label": "5 K",
+        "box_length_nm": 6.0,
+    },
+    {
+        "path": Path(
+            r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-16_18-51-01-300K\my_simulation_pos-300K.xyz"
+        ),
+        "label": "300 K",
+        "box_length_nm": 6.0,
+    },
+]
 
-# Side length of the cubic simulation box in nm
-BOX_LENGTH_NM = 6.0
-
-# Lennard-Jones parameter in nm
+# Lennard-Jones sigma parameter in nm
 SIGMA_NM = 0.34
 
-# 3: Angles between three-dimensional bond vectors
-# 2: Use only the x and y components
+# 3: angles between three-dimensional bond vectors
+# 2: use only the x and y components
 DIMENSION = 3
 
-# Discard the first part of the simulation as an equilibration phase.
+# Discard the first part of each simulation as equilibration.
 START_FRAME = 4000
 
 # None means: continue to the final frame.
 STOP_FRAME = None
 
-# Use only every nth frame.
+# Analyze only every nth frame.
 FRAME_STRIDE = 20
 
-# Number of angular bins between 0° and 180°.
+# Number of angular bins between 0 and 180 degrees.
 N_ANGLE_BINS = 180
 
-# Neighbors are considered only within this radius.
+# Global neighbor cutoff in nm.
 #
 # None:
-#   The radius is automatically chosen as the first RDF minimum after
-#   the first maximum.
+#   Determine a separate cutoff for every trajectory from the first RDF
+#   minimum after the first RDF maximum.
 #
-# Example of a fixed value:
-#   NEIGHBOR_CUTOFF_NM = 0.52
+# Float:
+#   Use the same fixed cutoff for every trajectory.
+#
+# A trajectory dictionary may optionally contain its own override:
+#
+#     "neighbor_cutoff_nm": 0.52
+#
 NEIGHBOR_CUTOFF_NM = None
 
-# RDF parameters used when the neighbor cutoff is determined
-# automatically.
+# RDF parameters used to determine automatic neighbor cutoffs.
 N_RDF_BINS = 300
 RDF_R_MAX_NM = None
 RDF_SMOOTHING_SIGMA_BINS = 2.0
 
-# The XYZ file contains coordinates in angstroms.
-# 1 Å = 0.1 nm
+# The XYZ files contain coordinates in angstroms.
 XYZ_COORDINATES_IN_ANGSTROM = True
 
-# Save output
+# Save output files.
 SAVE_CSV = True
 SAVE_PLOT = True
-SAVE_RDF_DIAGNOSTIC = True
+SAVE_INDIVIDUAL_RDF_DIAGNOSTICS = True
+SAVE_COMBINED_RDF_DIAGNOSTIC = True
 
-# Plot font sizes
+# Available y-axis scales:
+#
+#     "linear"
+#     "quadratic"
+#     "square_root"
+#     "logarithmic"
+#
+# The conventional scientific representation is "linear".
+# "quadratic" visually emphasizes large peaks.
+Y_AXIS_SCALE = "square_root"
+
+# Add each automatically selected cutoff to its curve label.
+SHOW_CUTOFF_IN_LEGEND = True
+
+# Combined plots are saved beside the first trajectory.
+OUTPUT_DIRECTORY = TRAJECTORIES[0]["path"].parent
+
+ANGLE_COMPARISON_PLOT_PATH = OUTPUT_DIRECTORY / (
+    "relative_angle_probability_comparison.png"
+)
+
+ANGULAR_CORRELATION_COMPARISON_PLOT_PATH = OUTPUT_DIRECTORY / (
+    "relative_angle_correlation_comparison.png"
+)
+
+RDF_COMPARISON_PLOT_PATH = OUTPUT_DIRECTORY / (
+    "rdf_neighbor_cutoff_comparison.png"
+)
+
+
+# ================================================================
+# PLOT APPEARANCE
+# ================================================================
+
 TITLE_FONTSIZE = 17
 AXIS_LABEL_FONTSIZE = 14
 TICK_LABEL_FONTSIZE = 12
 LEGEND_FONTSIZE = 11
 
-ANGLE_CSV_PATH = XYZ_PATH.with_name(
-    f"{XYZ_PATH.stem}_relative_angle_probability.csv"
-)
-
-ANGLE_PLOT_PATH = XYZ_PATH.with_name(
-    f"{XYZ_PATH.stem}_relative_angle_probability.png"
-)
-
-ANGULAR_CORRELATION_PLOT_PATH = XYZ_PATH.with_name(
-    f"{XYZ_PATH.stem}_relative_angle_correlation.png"
-)
-
-RDF_DIAGNOSTIC_PATH = XYZ_PATH.with_name(
-    f"{XYZ_PATH.stem}_rdf_neighbor_cutoff.png"
+plt.rcParams.update(
+    {
+        "font.size": 12,
+        "axes.titlesize": TITLE_FONTSIZE,
+        "axes.labelsize": AXIS_LABEL_FONTSIZE,
+        "xtick.labelsize": TICK_LABEL_FONTSIZE,
+        "ytick.labelsize": TICK_LABEL_FONTSIZE,
+        "legend.fontsize": LEGEND_FONTSIZE,
+    }
 )
 
 
 # ================================================================
-#   H E L P E R   F U N C T I O N S
+# HELPER FUNCTIONS
 # ================================================================
 
 
 def validate_positions(positions):
-    """Validate the shape of the trajectory array."""
+    """Validate and return a trajectory-position array."""
     positions = np.asarray(positions, dtype=float)
 
     if positions.ndim != 3:
         raise ValueError(
-            "positions must have the shape "
-            "(n_frames, n_particles, 3) besitzen."
+            "positions must have shape (n_frames, n_particles, 3)."
         )
 
     if positions.shape[2] != 3:
         raise ValueError(
-            "The final dimension of positions must be 3."
+            "The final dimension of positions must have size 3."
         )
 
     if positions.shape[0] == 0:
@@ -113,6 +196,11 @@ def validate_positions(positions):
     if positions.shape[1] < 3:
         raise ValueError(
             "At least three particles are required for relative angles."
+        )
+
+    if not np.all(np.isfinite(positions)):
+        raise ValueError(
+            "positions contains NaN or infinite values."
         )
 
     return positions
@@ -125,8 +213,91 @@ def minimum_image(displacements, box_length):
     )
 
 
+def apply_y_axis_scale(ax, scale_name, maximum_value):
+    """Apply a nonnegative y-axis transformation to a Matplotlib axis."""
+    scale_name = str(scale_name).lower()
+    maximum_value = max(float(maximum_value), 1.0e-12)
+    upper_limit = 1.05 * maximum_value
+
+    if scale_name == "linear":
+        ax.set_yscale("linear")
+        ax.set_ylim(0.0, upper_limit)
+
+    elif scale_name == "quadratic":
+        ax.set_ylim(0.0, upper_limit)
+        ax.set_yscale(
+            "function",
+            functions=(
+                lambda y: np.square(np.asarray(y, dtype=float)),
+                lambda y: np.sqrt(
+                    np.maximum(np.asarray(y, dtype=float), 0.0)
+                ),
+            ),
+        )
+
+    elif scale_name == "square_root":
+        ax.set_ylim(0.0, upper_limit)
+        ax.set_yscale(
+            "function",
+            functions=(
+                lambda y: np.sqrt(
+                    np.maximum(np.asarray(y, dtype=float), 0.0)
+                ),
+                lambda y: np.square(np.asarray(y, dtype=float)),
+            ),
+        )
+
+    elif scale_name == "logarithmic":
+        positive_lower_limit = max(maximum_value * 1.0e-4, 1.0e-8)
+        ax.set_yscale("log")
+        ax.set_ylim(positive_lower_limit, upper_limit)
+
+    else:
+        raise ValueError(
+            f"Unknown y-axis scale: {scale_name}. "
+            "Use 'linear', 'quadratic', 'square_root', or 'logarithmic'."
+        )
+
+
+def add_reference_angle_lines(ax):
+    """Add common structural reference angles to a plot."""
+    for reference_angle in (60.0, 90.0, 120.0, 180.0):
+        ax.axvline(
+            reference_angle,
+            linestyle=":",
+            linewidth=0.8,
+            alpha=0.5,
+        )
+
+
+def validate_trajectory_configuration(trajectory):
+    """Validate one TRAJECTORIES dictionary."""
+    required_keys = {"path", "label", "box_length_nm"}
+    missing_keys = required_keys - set(trajectory)
+
+    if missing_keys:
+        raise ValueError(
+            "A trajectory entry is missing keys: "
+            f"{sorted(missing_keys)}"
+        )
+
+    xyz_path = Path(trajectory["path"])
+    label = str(trajectory["label"])
+    box_length_nm = float(trajectory["box_length_nm"])
+
+    if not label.strip():
+        raise ValueError("Every trajectory label must be non-empty.")
+
+    if box_length_nm <= 0:
+        raise ValueError(
+            f"The box length for {label!r} must be greater than zero."
+        )
+
+    return xyz_path, label, box_length_nm
+
+
 # ================================================================
-#   R D F   F O R   N E I G H B O R   C U T O F F
+# RDF FOR THE NEIGHBOR CUTOFF
 # ================================================================
 
 
@@ -135,12 +306,13 @@ def calculate_rdf(
     box_length,
     n_bins=300,
     r_max=None,
+    progress_label="RDF",
 ):
     """
     Calculate the radial distribution function g(r).
 
-    It is mainly used here to locate the first minimum
-    after the first peak and therefore the first coordination shell.
+    The RDF is used here to locate the first minimum after the first
+    maximum and therefore the boundary of the first coordination shell.
     """
     positions = validate_positions(positions)
 
@@ -191,7 +363,8 @@ def calculate_rdf(
 
         if frame_index % 100 == 0 or frame_index == n_frames - 1:
             print(
-                f"RDF: frame {frame_index + 1} of {n_frames}"
+                f"{progress_label} RDF: frame "
+                f"{frame_index + 1} of {n_frames}"
             )
 
     box_volume = box_length**3
@@ -226,12 +399,7 @@ def determine_first_shell_cutoff(
     sigma_nm,
     smoothing_sigma_bins=2.0,
 ):
-    """
-    Determine the first RDF minimum after the first RDF maximum.
-
-    The search is restricted to the physically relevant region around
-    the first Lennard-Jones coordination shell.
-    """
+    """Determine the first RDF minimum after the first RDF maximum."""
     r_nm = np.asarray(r_nm, dtype=float)
     g_r = np.asarray(g_r, dtype=float)
 
@@ -240,6 +408,11 @@ def determine_first_shell_cutoff(
 
     if sigma_nm <= 0:
         raise ValueError("sigma_nm must be greater than zero.")
+
+    if smoothing_sigma_bins < 0:
+        raise ValueError(
+            "smoothing_sigma_bins must not be negative."
+        )
 
     smoothed_g_r = gaussian_filter1d(
         g_r,
@@ -263,7 +436,6 @@ def determine_first_shell_cutoff(
         np.argmax(smoothed_g_r[peak_indices])
     ]
 
-    # Search for local minima after the peak.
     minimum_candidates, _ = find_peaks(-smoothed_g_r)
     minimum_candidates = minimum_candidates[
         (minimum_candidates > first_peak_index)
@@ -273,7 +445,6 @@ def determine_first_shell_cutoff(
     if minimum_candidates.size > 0:
         first_minimum_index = minimum_candidates[0]
     else:
-        # Robust fallback: smallest g(r) in a region after the peak.
         fallback_mask = (
             (r_nm > r_nm[first_peak_index])
             & (r_nm <= 2.0 * sigma_nm)
@@ -308,7 +479,7 @@ def determine_first_shell_cutoff(
 
 
 # ================================================================
-#   R E L A T I V E   A N G L E   D I S T R I B U T I O N
+# RELATIVE-ANGLE DISTRIBUTION
 # ================================================================
 
 
@@ -318,69 +489,31 @@ def calculate_relative_angle_probability(
     neighbor_cutoff,
     n_angle_bins=180,
     dimension=3,
+    progress_label="Angles",
 ):
     """
     Calculate the distribution of angles between two neighbor bonds.
 
-    For a central particle i and two neighbors j and k, calculate:
+    For a central particle i and two neighbors j and k:
 
         theta_jik = arccos(
             r_ij dot r_ik / (|r_ij| |r_ik|)
         )
 
     All unordered neighbor pairs j < k are counted.
-
-    Parameters
-    ----------
-    positions : np.ndarray
-        Shape (n_frames, n_particles, 3).
-
-    box_length : float
-        Side length of the periodic cubic box.
-
-    neighbor_cutoff : float
-        Maximum distance of a neighbor from the central particle.
-        Typically the first minimum of the RDF.
-
-    n_angle_bins : int
-        Number of angular bins from 0° to 180°.
-
-    dimension : int
-        3 for three-dimensional angles, 2 for an analysis in the xy plane.
-
-    Returns
-    -------
-    angle_centers_deg : np.ndarray
-        Centers of the angular bins.
-
-    probability_density_per_degree : np.ndarray
-        Normalized probability density P(theta).
-        The integral from 0° to 180° is approximately 1.
-
-    isotropic_density_per_degree : np.ndarray
-        Expected reference density for randomly oriented bonds.
-
-    angular_correlation : np.ndarray
-        P(theta) divided by the isotropic reference.
-        A value of 1 corresponds to an isotropic distribution.
-
-    angle_histogram : np.ndarray
-        Absolute number of angles per bin.
-
-    mean_coordination_number : float
-        Mean number of neighbors within the cutoff.
     """
     positions = validate_positions(positions)
 
     if dimension not in (2, 3):
-        raise ValueError("dimension muss 2 oder 3 sein.")
+        raise ValueError("dimension must be 2 or 3.")
 
     if box_length <= 0:
         raise ValueError("box_length must be greater than zero.")
 
     if not 0 < neighbor_cutoff <= box_length / 2.0:
         raise ValueError(
-            "neighbor_cutoff must be greater than zero and no larger than L/2."
+            "neighbor_cutoff must be greater than zero and no larger "
+            "than L/2."
         )
 
     if n_angle_bins < 1:
@@ -407,7 +540,7 @@ def calculate_relative_angle_probability(
         )
 
         for central_index, neighbor_indices in enumerate(neighbor_lists):
-            # The KD-tree includes the central particle itself.
+            # The periodic KD-tree includes the central particle itself.
             neighbor_indices = np.asarray(
                 [
                     index
@@ -420,7 +553,6 @@ def calculate_relative_angle_probability(
             number_of_neighbors = neighbor_indices.size
             coordination_sum += number_of_neighbors
 
-            # At least two neighbors are required to define an angle.
             if number_of_neighbors < 2:
                 continue
 
@@ -482,14 +614,15 @@ def calculate_relative_angle_probability(
 
         if frame_index % 100 == 0 or frame_index == n_frames - 1:
             print(
-                f"Angles: frame {frame_index + 1} of {n_frames}"
+                f"{progress_label}: frame "
+                f"{frame_index + 1} of {n_frames}"
             )
 
     total_angle_count = int(angle_histogram.sum())
     if total_angle_count == 0:
         raise RuntimeError(
-            "No angles were found. "
-            "Check the neighbor cutoff and the selected frames."
+            "No angles were found. Check the neighbor cutoff and "
+            "the selected frames."
         )
 
     bin_widths_deg = np.diff(angle_edges_deg)
@@ -503,15 +636,12 @@ def calculate_relative_angle_probability(
     if dimension == 3:
         # For two independent isotropic 3D directions:
         # p(theta) = 1/2 sin(theta), 0 <= theta <= pi.
-        # Here, the exact probability per histogram bin is
-        # integrated and then divided by the bin width.
         isotropic_probability_per_bin = 0.5 * (
             np.cos(angle_edges_rad[:-1])
             - np.cos(angle_edges_rad[1:])
         )
     else:
-        # In 2D, the folded relative angle on [0, pi]
-        # is uniformly distributed for random directions.
+        # The folded relative angle in 2D is uniform on [0, pi].
         isotropic_probability_per_bin = (
             bin_widths_deg / 180.0
         )
@@ -542,154 +672,180 @@ def calculate_relative_angle_probability(
 
 
 # ================================================================
-#   R E A D   X Y Z   T R A J E C T O R Y
+# TRAJECTORY ANALYSIS
 # ================================================================
 
-positions, atom_names = read_xyz_trajectory(XYZ_PATH)
 
-print(f"Complete trajectory: {positions.shape}")
-
-if XYZ_COORDINATES_IN_ANGSTROM:
-    positions = positions * 0.1
-
-selected_positions = positions[
-    START_FRAME:STOP_FRAME:FRAME_STRIDE
-]
-
-if selected_positions.shape[0] == 0:
-    raise ValueError(
-        "The frame selection is empty. Check START_FRAME, "
-        "STOP_FRAME und FRAME_STRIDE."
+def analyze_trajectory(trajectory):
+    """Read and analyze one configured trajectory."""
+    xyz_path, label, box_length_nm = validate_trajectory_configuration(
+        trajectory
     )
 
-print(
-    f"Frames used for the analysis: "
-    f"{selected_positions.shape[0]}"
-)
-print(
-    f"Particles per frame: "
-    f"{selected_positions.shape[1]}"
-)
+    print()
+    print("=" * 72)
+    print(f"Analyzing: {label}")
+    print(f"File: {xyz_path}")
+    print("=" * 72)
 
+    positions, atom_names = read_xyz_trajectory(xyz_path)
+    positions = validate_positions(positions)
 
-# ================================================================
-#   D E T E R M I N E   N E I G H B O R   C U T O F F
-# ================================================================
+    print(f"{label}: complete trajectory shape = {positions.shape}")
 
-if NEIGHBOR_CUTOFF_NM is None:
-    r_nm, g_r, rdf_counts = calculate_rdf(
-        positions=selected_positions,
-        box_length=BOX_LENGTH_NM,
-        n_bins=N_RDF_BINS,
-        r_max=RDF_R_MAX_NM,
+    if XYZ_COORDINATES_IN_ANGSTROM:
+        positions = positions * 0.1
+
+    selected_positions = positions[
+        START_FRAME:STOP_FRAME:FRAME_STRIDE
+    ]
+
+    if selected_positions.shape[0] == 0:
+        raise ValueError(
+            f"{label}: the frame selection is empty. The complete "
+            f"trajectory contains {positions.shape[0]} frames, while "
+            f"START_FRAME is {START_FRAME}."
+        )
+
+    print(
+        f"{label}: frames used for analysis = "
+        f"{selected_positions.shape[0]}"
     )
+    print(
+        f"{label}: particles per frame = "
+        f"{selected_positions.shape[1]}"
+    )
+
+    trajectory_cutoff = trajectory.get(
+        "neighbor_cutoff_nm",
+        NEIGHBOR_CUTOFF_NM,
+    )
+
+    r_nm = None
+    g_r = None
+    rdf_counts = None
+    smoothed_g_r = None
+    first_peak_index = None
+    first_minimum_index = None
+
+    if trajectory_cutoff is None:
+        r_nm, g_r, rdf_counts = calculate_rdf(
+            positions=selected_positions,
+            box_length=box_length_nm,
+            n_bins=N_RDF_BINS,
+            r_max=RDF_R_MAX_NM,
+            progress_label=label,
+        )
+
+        (
+            neighbor_cutoff_nm,
+            smoothed_g_r,
+            first_peak_index,
+            first_minimum_index,
+        ) = determine_first_shell_cutoff(
+            r_nm=r_nm,
+            g_r=g_r,
+            sigma_nm=SIGMA_NM,
+            smoothing_sigma_bins=RDF_SMOOTHING_SIGMA_BINS,
+        )
+
+        print(
+            f"{label}: automatically determined neighbor cutoff "
+            f"= {neighbor_cutoff_nm:.5f} nm"
+        )
+    else:
+        neighbor_cutoff_nm = float(trajectory_cutoff)
+
+        if not 0 < neighbor_cutoff_nm <= box_length_nm / 2.0:
+            raise ValueError(
+                f"{label}: neighbor cutoff must be greater than zero "
+                "and no larger than half the box length."
+            )
+
+        print(
+            f"{label}: manually specified neighbor cutoff "
+            f"= {neighbor_cutoff_nm:.5f} nm"
+        )
 
     (
-        neighbor_cutoff_nm,
-        smoothed_g_r,
-        first_peak_index,
-        first_minimum_index,
-    ) = determine_first_shell_cutoff(
-        r_nm=r_nm,
-        g_r=g_r,
-        sigma_nm=SIGMA_NM,
-        smoothing_sigma_bins=RDF_SMOOTHING_SIGMA_BINS,
+        angle_deg,
+        probability_density,
+        isotropic_density,
+        angular_correlation,
+        angle_counts,
+        mean_coordination_number,
+    ) = calculate_relative_angle_probability(
+        positions=selected_positions,
+        box_length=box_length_nm,
+        neighbor_cutoff=neighbor_cutoff_nm,
+        n_angle_bins=N_ANGLE_BINS,
+        dimension=DIMENSION,
+        progress_label=f"{label} angles",
     )
 
+    print(f"{label}: counted relative angles = {angle_counts.sum()}")
     print(
-        "Automatically determined neighbor cutoff "
-        f"(first RDF minimum): {neighbor_cutoff_nm:.5f} nm"
+        f"{label}: mean coordination number within cutoff = "
+        f"{mean_coordination_number:.3f}"
     )
 
-    if SAVE_RDF_DIAGNOSTIC:
-        plt.figure(figsize=(9, 6))
-        plt.plot(r_nm, g_r, linewidth=1.0, label=r"$g(r)$")
-        plt.plot(
-            r_nm,
-            smoothed_g_r,
-            linewidth=1.5,
-            label="smoothed RDF",
+    return {
+        "xyz_path": xyz_path,
+        "label": label,
+        "box_length_nm": box_length_nm,
+        "atom_names": atom_names,
+        "n_frames": selected_positions.shape[0],
+        "n_particles": selected_positions.shape[1],
+        "neighbor_cutoff_nm": neighbor_cutoff_nm,
+        "r_nm": r_nm,
+        "g_r": g_r,
+        "rdf_counts": rdf_counts,
+        "smoothed_g_r": smoothed_g_r,
+        "first_peak_index": first_peak_index,
+        "first_minimum_index": first_minimum_index,
+        "angle_deg": angle_deg,
+        "probability_density": probability_density,
+        "isotropic_density": isotropic_density,
+        "angular_correlation": angular_correlation,
+        "angle_counts": angle_counts,
+        "mean_coordination_number": mean_coordination_number,
+    }
+
+
+def make_curve_label(result):
+    """Create a legend label for one trajectory result."""
+    if SHOW_CUTOFF_IN_LEGEND:
+        return (
+            f"{result['label']} "
+            f"($r_c$ = {result['neighbor_cutoff_nm']:.3f} nm)"
         )
-        plt.axvline(
-            r_nm[first_peak_index],
-            linestyle=":",
-            linewidth=1.2,
-            label="first peak",
-        )
-        plt.axvline(
-            neighbor_cutoff_nm,
-            linestyle="--",
-            linewidth=1.2,
-            label="neighbor cutoff: first minimum",
-        )
-        plt.xlabel(r"distance $r$ / nm", fontsize=AXIS_LABEL_FONTSIZE)
-        plt.ylabel(r"radial distribution function $g(r)$", fontsize=AXIS_LABEL_FONTSIZE)
-        plt.title("Determination of the First Coordination Shell", fontsize=TITLE_FONTSIZE, pad=12)
-        plt.grid(True)
-        plt.tick_params(axis="both", labelsize=TICK_LABEL_FONTSIZE)
-        plt.legend(fontsize=LEGEND_FONTSIZE)
-        plt.tight_layout()
-        plt.savefig(
-            RDF_DIAGNOSTIC_PATH,
-            dpi=300,
-            bbox_inches="tight",
-        )
-        plt.close()
-        print(
-            "RDF diagnostic saved to: "
-            f"{RDF_DIAGNOSTIC_PATH}"
-        )
-else:
-    neighbor_cutoff_nm = float(NEIGHBOR_CUTOFF_NM)
-    print(
-        "Manually specified neighbor cutoff: "
-        f"{neighbor_cutoff_nm:.5f} nm"
+
+    return result["label"]
+
+
+# ================================================================
+# OUTPUT FUNCTIONS
+# ================================================================
+
+
+def save_angle_csv(result):
+    """Save one angle-analysis CSV file beside its XYZ trajectory."""
+    csv_path = result["xyz_path"].with_name(
+        f"{result['xyz_path'].stem}_relative_angle_probability.csv"
     )
 
-
-# ================================================================
-#   C A L C U L A T E   R E L A T I V E   A N G L E S
-# ================================================================
-
-(
-    angle_deg,
-    probability_density,
-    isotropic_density,
-    angular_correlation,
-    angle_counts,
-    mean_coordination_number,
-) = calculate_relative_angle_probability(
-    positions=selected_positions,
-    box_length=BOX_LENGTH_NM,
-    neighbor_cutoff=neighbor_cutoff_nm,
-    n_angle_bins=N_ANGLE_BINS,
-    dimension=DIMENSION,
-)
-
-print(f"Counted relative angles: {angle_counts.sum()}")
-print(
-    "Mean coordination number within the cutoff: "
-    f"{mean_coordination_number:.3f}"
-)
-
-
-# ================================================================
-#   S A V E   C S V
-# ================================================================
-
-if SAVE_CSV:
     output_data = np.column_stack(
         (
-            angle_deg,
-            probability_density,
-            isotropic_density,
-            angular_correlation,
-            angle_counts,
+            result["angle_deg"],
+            result["probability_density"],
+            result["isotropic_density"],
+            result["angular_correlation"],
+            result["angle_counts"],
         )
     )
 
     np.savetxt(
-        ANGLE_CSV_PATH,
+        csv_path,
         output_data,
         delimiter=",",
         header=(
@@ -702,119 +858,323 @@ if SAVE_CSV:
         comments="",
     )
 
-    print(
-        "Angle CSV saved to: "
-        f"{ANGLE_CSV_PATH}"
+    print(f"{result['label']}: angle CSV saved to:\n{csv_path.resolve()}")
+
+
+def save_individual_rdf_diagnostic(result):
+    """Save an RDF cutoff diagnostic for one automatically analyzed file."""
+    if result["r_nm"] is None:
+        return
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    ax.plot(
+        result["r_nm"],
+        result["g_r"],
+        linewidth=1.0,
+        label=r"$g(r)$",
     )
-
-
-# ================================================================
-#   P L O T   A N G L E   D I S T R I B U T I O N
-# ================================================================
-
-plt.figure(figsize=(9, 6))
-plt.plot(
-    angle_deg,
-    probability_density,
-    linewidth=1.5,
-    label=r"measured $P(\theta)$",
-)
-plt.plot(
-    angle_deg,
-    isotropic_density,
-    linestyle="--",
-    linewidth=1.2,
-    label=(
-        r"isotropic reference $P_0(\theta)$"
-        if DIMENSION == 3
-        else "uniform 2D reference"
-    ),
-)
-
-for reference_angle in (60.0, 90.0, 120.0, 180.0):
-    plt.axvline(
-        reference_angle,
+    ax.plot(
+        result["r_nm"],
+        result["smoothed_g_r"],
+        linewidth=1.5,
+        label="Smoothed RDF",
+    )
+    ax.axvline(
+        result["r_nm"][result["first_peak_index"]],
         linestyle=":",
-        linewidth=0.8,
-        alpha=0.5,
+        linewidth=1.2,
+        label="First peak",
+    )
+    ax.axvline(
+        result["neighbor_cutoff_nm"],
+        linestyle="--",
+        linewidth=1.2,
+        label="Neighbor cutoff: first minimum",
     )
 
-plt.xlabel(r"relative angle $\theta$ / degrees", fontsize=AXIS_LABEL_FONTSIZE)
-plt.ylabel(r"probability density $P(\theta)$ / degree$^{-1}$", fontsize=AXIS_LABEL_FONTSIZE)
-plt.title(
-    "Relative Angle Distribution in the First Coordination Shell\n"
-    f"Neighbor cutoff = {neighbor_cutoff_nm:.4f} nm",
-    fontsize=TITLE_FONTSIZE,
-    pad=12,
-)
-plt.xlim(0.0, 180.0)
-plt.grid(True)
-plt.tick_params(axis="both", labelsize=TICK_LABEL_FONTSIZE)
-plt.legend(fontsize=LEGEND_FONTSIZE)
-plt.tight_layout()
+    maximum_value = max(
+        float(np.max(result["g_r"])),
+        float(np.max(result["smoothed_g_r"])),
+    )
+    apply_y_axis_scale(ax, Y_AXIS_SCALE, maximum_value)
 
-if SAVE_PLOT:
-    plt.savefig(
-        ANGLE_PLOT_PATH,
+    ax.set_xlabel(r"Distance $r$ / nm")
+    ax.set_ylabel(r"Radial distribution function $g(r)$")
+    ax.set_title(
+        f"First Coordination-Shell Cutoff: {result['label']}",
+        pad=12,
+    )
+    ax.grid(True, alpha=0.4)
+    ax.legend()
+    fig.tight_layout()
+
+    diagnostic_path = result["xyz_path"].with_name(
+        f"{result['xyz_path'].stem}_rdf_neighbor_cutoff.png"
+    )
+
+    fig.savefig(
+        diagnostic_path,
         dpi=300,
         bbox_inches="tight",
     )
+    plt.close(fig)
+
     print(
-        "Angle-distribution plot saved to: "
-        f"{ANGLE_PLOT_PATH}"
+        f"{result['label']}: RDF diagnostic saved to:\n"
+        f"{diagnostic_path.resolve()}"
     )
 
-plt.show()
+
+def plot_combined_rdf_diagnostic(results):
+    """Plot all available smoothed RDFs and selected cutoffs."""
+    rdf_results = [result for result in results if result["r_nm"] is not None]
+
+    if not rdf_results:
+        print(
+            "Combined RDF diagnostic skipped because all cutoffs were "
+            "specified manually."
+        )
+        return None
+
+    fig, ax = plt.subplots(figsize=(11, 7))
+    maximum_value = 0.0
+
+    for result in rdf_results:
+        line, = ax.plot(
+            result["r_nm"],
+            result["smoothed_g_r"],
+            linewidth=2.0,
+            label=make_curve_label(result),
+        )
+        ax.axvline(
+            result["neighbor_cutoff_nm"],
+            linestyle="--",
+            linewidth=1.0,
+            alpha=0.75,
+            color=line.get_color(),
+        )
+        maximum_value = max(
+            maximum_value,
+            float(np.max(result["smoothed_g_r"])),
+        )
+
+    apply_y_axis_scale(ax, Y_AXIS_SCALE, maximum_value)
+
+    ax.set_xlabel(r"Distance $r$ / nm")
+    ax.set_ylabel(r"Smoothed radial distribution function $g(r)$")
+    ax.set_title(
+        "Comparison of First Coordination-Shell Cutoffs",
+        pad=12,
+    )
+    ax.grid(True, alpha=0.4)
+    ax.legend()
+    fig.tight_layout()
+
+    if SAVE_PLOT and SAVE_COMBINED_RDF_DIAGNOSTIC:
+        RDF_COMPARISON_PLOT_PATH.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        fig.savefig(
+            RDF_COMPARISON_PLOT_PATH,
+            dpi=300,
+            bbox_inches="tight",
+        )
+        print(
+            "Combined RDF diagnostic saved to:\n"
+            f"{RDF_COMPARISON_PLOT_PATH.resolve()}"
+        )
+
+    return fig
+
+
+def plot_angle_probability_comparison(results):
+    """Plot all relative-angle probability-density curves."""
+    fig, ax = plt.subplots(figsize=(11, 7))
+    maximum_value = 0.0
+
+    for result in results:
+        ax.plot(
+            result["angle_deg"],
+            result["probability_density"],
+            linewidth=2.0,
+            label=make_curve_label(result),
+        )
+        maximum_value = max(
+            maximum_value,
+            float(np.max(result["probability_density"])),
+        )
+
+    # The isotropic reference is identical for every trajectory because
+    # DIMENSION and the angular bins are shared.
+    reference = results[0]
+    ax.plot(
+        reference["angle_deg"],
+        reference["isotropic_density"],
+        linestyle="--",
+        linewidth=1.5,
+        label=(
+            r"Isotropic reference $P_0(\theta)$"
+            if DIMENSION == 3
+            else "Uniform 2D reference"
+        ),
+    )
+    maximum_value = max(
+        maximum_value,
+        float(np.max(reference["isotropic_density"])),
+    )
+
+    add_reference_angle_lines(ax)
+    apply_y_axis_scale(ax, Y_AXIS_SCALE, maximum_value)
+
+    ax.set_xlabel(r"Relative angle $\theta$ / degrees")
+    ax.set_ylabel(
+        r"Probability density $P(\theta)$ / degree$^{-1}$"
+    )
+    ax.set_title(
+        "Comparison of Relative-Angle Distributions "
+        "in the First Coordination Shell",
+        pad=12,
+    )
+    ax.set_xlim(0.0, 180.0)
+    ax.grid(True, alpha=0.4)
+    ax.legend()
+    fig.tight_layout()
+
+    if SAVE_PLOT:
+        ANGLE_COMPARISON_PLOT_PATH.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        fig.savefig(
+            ANGLE_COMPARISON_PLOT_PATH,
+            dpi=300,
+            bbox_inches="tight",
+        )
+        print(
+            "Angle-probability comparison saved to:\n"
+            f"{ANGLE_COMPARISON_PLOT_PATH.resolve()}"
+        )
+
+    return fig
+
+
+def plot_angular_correlation_comparison(results):
+    """Plot all isotropy-corrected angular-correlation curves."""
+    fig, ax = plt.subplots(figsize=(11, 7))
+    maximum_value = 1.0
+
+    for result in results:
+        ax.plot(
+            result["angle_deg"],
+            result["angular_correlation"],
+            linewidth=2.0,
+            label=make_curve_label(result),
+        )
+        maximum_value = max(
+            maximum_value,
+            float(np.max(result["angular_correlation"])),
+        )
+
+    ax.axhline(
+        1.0,
+        linestyle="--",
+        linewidth=1.2,
+        label="Isotropic reference",
+    )
+
+    add_reference_angle_lines(ax)
+    apply_y_axis_scale(ax, Y_AXIS_SCALE, maximum_value)
+
+    ax.set_xlabel(r"Relative angle $\theta$ / degrees")
+    ax.set_ylabel(r"Angular correlation $g_\theta(\theta)$")
+    ax.set_title(
+        "Comparison of Isotropy-Corrected Relative-Angle Distributions",
+        pad=12,
+    )
+    ax.set_xlim(0.0, 180.0)
+    ax.grid(True, alpha=0.4)
+    ax.legend()
+    fig.tight_layout()
+
+    if SAVE_PLOT:
+        ANGULAR_CORRELATION_COMPARISON_PLOT_PATH.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        fig.savefig(
+            ANGULAR_CORRELATION_COMPARISON_PLOT_PATH,
+            dpi=300,
+            bbox_inches="tight",
+        )
+        print(
+            "Angular-correlation comparison saved to:\n"
+            f"{ANGULAR_CORRELATION_COMPARISON_PLOT_PATH.resolve()}"
+        )
+
+    return fig
 
 
 # ================================================================
-#   I S O T R O P Y - C O R R E C T E D   D I S T R I B U T I O N
+# MAIN PROGRAM
 # ================================================================
 
-plt.figure(figsize=(9, 6))
-plt.plot(
-    angle_deg,
-    angular_correlation,
-    linewidth=1.5,
-    label=r"$g_\theta(\theta)=P(\theta)/P_0(\theta)$",
-)
-plt.axhline(
-    1.0,
-    linestyle="--",
-    linewidth=1.0,
-    label="isotropic reference",
-)
 
-for reference_angle in (60.0, 90.0, 120.0, 180.0):
-    plt.axvline(
-        reference_angle,
-        linestyle=":",
-        linewidth=0.8,
-        alpha=0.5,
+def main():
+    if not TRAJECTORIES:
+        raise ValueError(
+            "TRAJECTORIES must contain at least one trajectory."
+        )
+
+    if FRAME_STRIDE < 1:
+        raise ValueError("FRAME_STRIDE must be at least 1.")
+
+    if DIMENSION not in (2, 3):
+        raise ValueError("DIMENSION must be 2 or 3.")
+
+    results = []
+
+    for trajectory in TRAJECTORIES:
+        result = analyze_trajectory(trajectory)
+        results.append(result)
+
+        if SAVE_CSV:
+            save_angle_csv(result)
+
+        if SAVE_PLOT and SAVE_INDIVIDUAL_RDF_DIAGNOSTICS:
+            save_individual_rdf_diagnostic(result)
+
+    print()
+    print("=" * 72)
+    print("Analysis summary")
+    print("=" * 72)
+
+    for result in results:
+        print(
+            f"{result['label']}: "
+            f"cutoff = {result['neighbor_cutoff_nm']:.5f} nm, "
+            f"mean coordination = "
+            f"{result['mean_coordination_number']:.3f}, "
+            f"angles = {int(result['angle_counts'].sum())}"
+        )
+
+    figures = []
+
+    if SAVE_COMBINED_RDF_DIAGNOSTIC:
+        rdf_figure = plot_combined_rdf_diagnostic(results)
+        if rdf_figure is not None:
+            figures.append(rdf_figure)
+
+    figures.append(
+        plot_angle_probability_comparison(results)
+    )
+    figures.append(
+        plot_angular_correlation_comparison(results)
     )
 
-plt.xlabel(r"relative angle $\theta$ / degrees", fontsize=AXIS_LABEL_FONTSIZE)
-plt.ylabel(r"angular correlation $g_\theta(\theta)$", fontsize=AXIS_LABEL_FONTSIZE)
-plt.title(
-    f"Isotropy-Corrected Relative Angle Distribution\n",
-    fontsize=TITLE_FONTSIZE,
-    pad=12,
-)
-plt.xlim(0.0, 180.0)
-plt.grid(True)
-plt.tick_params(axis="both", labelsize=TICK_LABEL_FONTSIZE)
-plt.legend(fontsize=LEGEND_FONTSIZE)
-plt.tight_layout()
+    plt.show()
 
-if SAVE_PLOT:
-    plt.savefig(
-        ANGULAR_CORRELATION_PLOT_PATH,
-        dpi=300,
-        bbox_inches="tight",
-    )
-    print(
-        "Angular-correlation plot saved to: "
-        f"{ANGULAR_CORRELATION_PLOT_PATH}"
-    )
 
-plt.show()
+if __name__ == "__main__":
+    main()
