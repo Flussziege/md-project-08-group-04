@@ -13,8 +13,10 @@ from scipy.constants import R
 #   E I N S T E L L U N G E N
 # ----------------------------------------------------------------
 
-project_dir = Path("/Users/arntvonbodelschwingh/moritz_code_speicher/md-project-08-group-04")
+project_dir = Path(__file__).resolve().parent
 output_dir = project_dir / "minimization_output"
+
+output_dir.mkdir(parents=True, exist_ok=True)
 
 use_existing_files = True   # True: vorhandene Dateien benutzen
 force_rerun = False         # True: Simulationen immer neu starten
@@ -43,21 +45,20 @@ base_args = {
     "seed": 420,
     "max_steps": 100000,
 }
+"""
 methods = [
     {
-        "label": "CD with Armijo & recy. alpha, decr. - 100k",
+        "label": "CD with Armijo & recy. alpha, decr. 100k",
         "SD": False,
         "recoursive_alpha": True,
         "alpha_method": "amijo",
-        "rec_alpha_value": 18.0,´
+        "rec_alpha_value": 18.0,
         "alpha_new_idea": True,
     },
 ]
-
-
-
-
 """
+
+
 
 methods = [
     {
@@ -68,6 +69,12 @@ methods = [
         "rec_alpha_value": 2.0,
         "alpha_new_idea": False,
     },
+
+]
+
+"""
+==================================================
+12
         {
         "label": "CD with Armijo",
         "SD": False,
@@ -92,11 +99,8 @@ methods = [
         "rec_alpha_value": 2.8,
         "alpha_new_idea": True,
     },
-]
-"""
-"""
-==================================================
-12
+
+
 
     {
         "label": "CD with Armijo",
@@ -325,7 +329,7 @@ def plot_quantity(
 plot_quantity(
     column="Fmean",
     ylabel=r"mean force $F_{\mathrm{mean}}$",
-    title="mean force during minimisation",
+    title="Mean Force during Minimisation",
     ylim=(-30, 30),
     filename="vergleich_Fmean.png"
 )
@@ -333,7 +337,7 @@ plot_quantity(
 plot_quantity(
     column="Frms",
     ylabel=r"rms-force $F_{\mathrm{RMS}}$",
-    title="rms-force during minimisation",
+    title="rms-Force during Minimisation",
     ylim=(-30, 30),
     filename="vergleich_Frms.png"
 )
@@ -341,7 +345,7 @@ plot_quantity(
 plot_quantity(
     column="Fmax",
     ylabel=r"max-force $F_{\mathrm{max}}$",
-    title="max-force during minimisation",
+    title="max-Force during Minimisation",
     ylim=(-30, 30),
     filename="vergleich_Frms.png"
 )
@@ -349,7 +353,7 @@ plot_quantity(
 plot_quantity(
     column="E_pot",
     ylabel=r"potential energy $E_{\mathrm{pot}}$",
-    title="potential energy during minimisation",
+    title="Potential Energy during Minimisation",
     ylim=(-2600, 30),
     filename="vergleich_Epot.png"
 )
