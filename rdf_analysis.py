@@ -74,6 +74,7 @@ from scipy.spatial import cKDTree
 # INPUT PARAMETERS
 # ================================================================
 
+
 TRAJECTORIES = [
     {
         "path": Path(
