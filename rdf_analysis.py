@@ -1,15 +1,13 @@
 """
-Radial distribution function analysis for an XYZ trajectory
-============================================================
+Radial distribution function comparison for XYZ trajectories
+=============================================================
 
 PURPOSE
 -------
-This script calculates the radial distribution function g(r) of a molecular
-dynamics trajectory stored in XYZ format.
+This script calculates and compares the radial distribution functions g(r)
+of multiple molecular-dynamics trajectories stored in XYZ format.
 
-The radial distribution function describes how likely it is to find another
-particle at a distance r from a reference particle relative to an ideal,
-uniform particle distribution.
+All RDF curves are drawn in the same figure.
 
 For a homogeneous ideal gas:
 
@@ -18,18 +16,19 @@ For a homogeneous ideal gas:
 For a liquid, g(r) usually shows:
 
     - a pronounced first maximum,
-    - a clear minimum after the first maximum,
+    - a minimum after the first maximum,
     - additional damped maxima at larger distances.
 
 USAGE
 -----
-1. Set XYZ_PATH to the XYZ trajectory.
-2. Set BOX_LENGTH_NM to the cubic simulation-box length.
-3. Set START_FRAME to exclude the equilibration phase.
+1. Add the XYZ trajectories to TRAJECTORIES.
+2. Set the cubic box length for every trajectory.
+3. Set START_FRAME to exclude equilibration.
 4. Set FRAME_STRIDE to reduce the number of analyzed frames.
-5. Run:
+5. Select the desired y-axis scale.
+6. Run:
 
-       python rdf_analysis.py
+       python rdf_comparison.py
 
 EXPECTED UNITS
 --------------
@@ -41,28 +40,26 @@ Set XYZ_COORDINATES_IN_ANGSTROM = True in this case.
 
 OUTPUT
 ------
-The script can save:
+The script saves:
 
-    - a CSV file containing r, g(r), coordination number, and pair counts,
-    - a PNG plot of the radial distribution function.
+    - one RDF CSV file for every trajectory,
+    - one PNG figure containing all RDF curves.
 
-THEORY
-------
-For a spherical shell between r_i and r_{i+1}, the shell volume is
+Y-AXIS SCALES
+-------------
+Available options are:
 
-    Delta V_i = 4*pi/3 * (r_{i+1}^3 - r_i^3)
+    "linear"
+        Standard RDF representation.
 
-The RDF is calculated as
+    "quadratic"
+        Emphasizes large RDF peaks.
 
-    g(r_i) =
-        measured pair count in shell i
-        ---------------------------------------------
-        expected pair count for a uniform distribution
+    "square_root"
+        Compresses large peaks and emphasizes smaller differences.
 
-The coordination number is
-
-    N_coord(r) =
-        rho * integral_0^r g(r') 4*pi*r'^2 dr'
+    "logarithmic"
+        Logarithmic scale. Values equal to zero cannot be displayed.
 """
 
 
@@ -77,19 +74,24 @@ from scipy.spatial import cKDTree
 # INPUT PARAMETERS
 # ================================================================
 
-XYZ_PATH = (
-    Path.home()
-    / "Documents"
-    / "VSCODE"
-    / "moldyn_proj"
-    / "md-project"
-    / "results"
-    / "Long_sim_200_new"
-    / "my_simulation_pos.xyz"
-)
+TRAJECTORIES = [
+    {
+        "path": Path(
+            r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-16_18-51-01-300K\my_simulation_pos-300K.xyz"
+        ),
+        "label": "300K",
+        "box_length_nm": 6.0,
+    },
+    {
+        "path": Path(
+            r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00-5K\my_simulation_pos-5K.xyz"
+        ),
+        "label": "50 K",
+        "box_length_nm": 6.0,
+    },
+]
 
-# Cubic simulation-box length in nm
-BOX_LENGTH_NM = 6.0
+
 
 # Lennard-Jones sigma parameter in nm
 SIGMA_NM = 0.34
@@ -104,26 +106,37 @@ STOP_FRAME = None
 # Analyze only every nth frame
 FRAME_STRIDE = 20
 
-# Number of distance bins
+# Number of radial-distance bins
 N_BINS = 200
 
 # Maximum analyzed distance in nm.
-# None means BOX_LENGTH_NM / 2.
+#
+# None means that the common maximum distance is calculated as:
+#
+#     minimum box length / 2
+#
+# This ensures that all trajectories use the same distance range.
 R_MAX_NM = None
 
-# Set True when the XYZ coordinates are stored in angstrom
+# Set True when XYZ coordinates are stored in angstrom
 XYZ_COORDINATES_IN_ANGSTROM = True
 
 # Save calculated data and figure
 SAVE_CSV = True
 SAVE_PLOT = True
 
-CSV_PATH = XYZ_PATH.with_name(
-    f"{XYZ_PATH.stem}_rdf.csv"
-)
+# Available options:
+#
+#     "linear"
+#     "quadratic"
+#     "square_root"
+#     "logarithmic"
+#
+Y_AXIS_SCALE = "square_root"
 
-PLOT_PATH = XYZ_PATH.with_name(
-    f"{XYZ_PATH.stem}_rdf.png"
+# Output path for the comparison figure
+COMPARISON_PLOT_PATH = TRAJECTORIES[0]["path"].with_name(
+    "rdf_comparison.png"
 )
 
 
@@ -165,6 +178,7 @@ def read_xyz_trajectory(filename):
     -------
     positions : np.ndarray
         Array with shape:
+
             (n_frames, n_particles, 3)
 
     atom_names : list[str]
@@ -182,7 +196,9 @@ def read_xyz_trajectory(filename):
         lines = file.readlines()
 
     if not lines:
-        raise ValueError("The XYZ file is empty.")
+        raise ValueError(
+            f"The XYZ file is empty:\n{filename.resolve()}"
+        )
 
     try:
         n_particles = int(lines[0].strip())
@@ -201,8 +217,8 @@ def read_xyz_trajectory(filename):
 
     if len(lines) % lines_per_frame != 0:
         raise ValueError(
-            "The XYZ file contains an incomplete frame or does not "
-            "use a constant particle number."
+            f"The XYZ file contains an incomplete frame or does not "
+            f"use a constant particle number:\n{filename.resolve()}"
         )
 
     n_frames = len(lines) // lines_per_frame
@@ -217,6 +233,24 @@ def read_xyz_trajectory(filename):
     for frame_index in range(n_frames):
         frame_start = frame_index * lines_per_frame
 
+        # Verify that every frame has the same particle number
+        try:
+            frame_particle_count = int(
+                lines[frame_start].strip()
+            )
+        except ValueError as error:
+            raise ValueError(
+                f"Invalid particle count in frame "
+                f"{frame_index + 1}."
+            ) from error
+
+        if frame_particle_count != n_particles:
+            raise ValueError(
+                f"Frame {frame_index + 1} contains "
+                f"{frame_particle_count} particles, but the first "
+                f"frame contains {n_particles} particles."
+            )
+
         for particle_index in range(n_particles):
             line_index = frame_start + 2 + particle_index
             columns = lines[line_index].split()
@@ -224,7 +258,7 @@ def read_xyz_trajectory(filename):
             if len(columns) < 4:
                 raise ValueError(
                     f"Invalid XYZ line {line_index + 1}: "
-                    "expected atom label and three coordinates."
+                    "expected an atom label and three coordinates."
                 )
 
             atom_name = columns[0]
@@ -271,24 +305,26 @@ def calculate_rdf(
     ----------
     positions : np.ndarray
         Particle positions with shape:
+
             (n_frames, n_particles, 3)
 
-        positions and box_length must use the same length unit.
+        Positions and box_length must use the same length unit.
 
     box_length : float
         Length of the cubic simulation box.
 
     n_bins : int, default=200
-        Number of radial distance intervals.
+        Number of radial-distance intervals.
 
     r_max : float or None
         Maximum analyzed distance.
 
         If None:
+
             r_max = box_length / 2
 
     progress_label : str, default="RDF"
-        Text shown in progress messages.
+        Text displayed in progress messages.
 
     Returns
     -------
@@ -302,7 +338,7 @@ def calculate_rdf(
         Mean number of neighbors within radius r.
 
     pair_histogram : np.ndarray
-        Total number of measured particle pairs per bin.
+        Total number of measured particle pairs in every bin.
     """
 
     positions = np.asarray(
@@ -388,19 +424,19 @@ def calculate_rdf(
 
     for frame_index, frame_positions in enumerate(positions):
 
-        # Wrap all particles into [0, L)
+        # Wrap particles into the interval [0, box_length)
         wrapped_positions = np.mod(
             frame_positions,
             box_length,
         )
 
-        # Periodic KD-tree
+        # Create a periodic KD-tree
         tree = cKDTree(
             wrapped_positions,
             boxsize=box_length,
         )
 
-        # query_pairs returns every pair only once: i < j
+        # query_pairs returns every pair once, with i < j
         pairs = tree.query_pairs(
             r=r_max,
             output_type="ndarray",
@@ -525,7 +561,7 @@ def analyze_xyz_trajectory(
     Returns
     -------
     result : dict
-        Dictionary containing the trajectory metadata and RDF arrays.
+        Dictionary containing trajectory metadata and RDF arrays.
     """
 
     xyz_path = Path(xyz_path)
@@ -553,7 +589,10 @@ def analyze_xyz_trajectory(
 
     if selected_positions.shape[0] == 0:
         raise ValueError(
-            f"{progress_label}: the selected frame range is empty."
+            f"{progress_label}: the selected frame range is empty. "
+            f"The complete trajectory contains "
+            f"{positions.shape[0]} frames and START_FRAME is "
+            f"{start_frame}."
         )
 
     print(
@@ -592,73 +631,249 @@ def analyze_xyz_trajectory(
 
 
 # ================================================================
+# Y-AXIS SCALING
+# ================================================================
+
+def apply_y_axis_scale(ax, scale_name, maximum_g_r):
+    """
+    Apply the selected y-axis scale.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Plot axes.
+
+    scale_name : str
+        Name of the selected scale.
+
+    maximum_g_r : float
+        Largest RDF value in all analyzed trajectories.
+    """
+
+    scale_name = scale_name.lower()
+
+    if scale_name == "linear":
+        ax.set_yscale("linear")
+        ax.set_ylim(
+            bottom=0.0,
+            top=maximum_g_r * 1.05,
+        )
+
+    elif scale_name == "quadratic":
+        ax.set_ylim(
+            bottom=0.0,
+            top=maximum_g_r * 1.05,
+        )
+
+        ax.set_yscale(
+            "function",
+            functions=(
+                lambda y: np.square(y),
+                lambda y: np.sqrt(
+                    np.maximum(y, 0.0)
+                ),
+            ),
+        )
+
+    elif scale_name == "square_root":
+        ax.set_ylim(
+            bottom=0.0,
+            top=maximum_g_r * 1.05,
+        )
+
+        ax.set_yscale(
+            "function",
+            functions=(
+                lambda y: np.sqrt(
+                    np.maximum(y, 0.0)
+                ),
+                lambda y: np.square(y),
+            ),
+        )
+
+    elif scale_name == "logarithmic":
+        # Logarithmic axes cannot display zero.
+        positive_lower_limit = max(
+            maximum_g_r * 1.0e-4,
+            1.0e-6,
+        )
+
+        ax.set_yscale("log")
+
+        ax.set_ylim(
+            bottom=positive_lower_limit,
+            top=maximum_g_r * 1.05,
+        )
+
+    else:
+        raise ValueError(
+            f"Unknown Y_AXIS_SCALE: {scale_name}. "
+            "Available options are 'linear', 'quadratic', "
+            "'square_root', and 'logarithmic'."
+        )
+
+
+# ================================================================
 # MAIN PROGRAM
 # ================================================================
 
 def main():
-    result = analyze_xyz_trajectory(
-        xyz_path=XYZ_PATH,
-        box_length_nm=BOX_LENGTH_NM,
-        start_frame=START_FRAME,
-        stop_frame=STOP_FRAME,
-        frame_stride=FRAME_STRIDE,
-        n_bins=N_BINS,
-        r_max_nm=R_MAX_NM,
-        coordinates_in_angstrom=XYZ_COORDINATES_IN_ANGSTROM,
-        progress_label=XYZ_PATH.stem,
+    if not TRAJECTORIES:
+        raise ValueError(
+            "TRAJECTORIES must contain at least one trajectory."
+        )
+
+    # ------------------------------------------------------------
+    # Determine a common maximum RDF distance
+    # ------------------------------------------------------------
+
+    smallest_half_box_length = min(
+        trajectory["box_length_nm"] / 2.0
+        for trajectory in TRAJECTORIES
     )
 
-    r_nm = result["r_nm"]
-    g_r = result["g_r"]
-    coordination_number = result["coordination_number"]
-    pair_counts = result["pair_counts"]
+    if R_MAX_NM is None:
+        common_r_max_nm = smallest_half_box_length
+    else:
+        common_r_max_nm = R_MAX_NM
+
+    if common_r_max_nm <= 0:
+        raise ValueError(
+            "R_MAX_NM must be greater than zero."
+        )
+
+    if common_r_max_nm > smallest_half_box_length:
+        raise ValueError(
+            "R_MAX_NM is larger than half of the smallest "
+            "simulation-box length. Use a value not greater than "
+            f"{smallest_half_box_length:.6g} nm."
+        )
+
+    print(
+        "Common maximum RDF distance = "
+        f"{common_r_max_nm:.6g} nm"
+    )
 
     # ------------------------------------------------------------
-    # Save CSV
+    # Calculate all RDF curves
     # ------------------------------------------------------------
 
-    if SAVE_CSV:
-        output_data = np.column_stack(
-            (
-                r_nm,
-                g_r,
-                coordination_number,
-                pair_counts,
+    all_results = []
+    maximum_g_r = 1.0
+
+    for trajectory in TRAJECTORIES:
+        required_keys = {
+            "path",
+            "label",
+            "box_length_nm",
+        }
+
+        missing_keys = (
+            required_keys
+            - set(trajectory)
+        )
+
+        if missing_keys:
+            raise ValueError(
+                "A trajectory entry is missing the following keys: "
+                f"{sorted(missing_keys)}"
             )
+
+        xyz_path = Path(
+            trajectory["path"]
         )
 
-        np.savetxt(
-            CSV_PATH,
-            output_data,
-            delimiter=",",
-            header=(
-                "r_nm,"
-                "g_r,"
-                "coordination_number,"
-                "pair_count"
+        label = str(
+            trajectory["label"]
+        )
+
+        box_length_nm = float(
+            trajectory["box_length_nm"]
+        )
+
+        print()
+        print("=" * 70)
+        print(f"Analyzing: {label}")
+        print(f"File: {xyz_path}")
+        print("=" * 70)
+
+        result = analyze_xyz_trajectory(
+            xyz_path=xyz_path,
+            box_length_nm=box_length_nm,
+            start_frame=START_FRAME,
+            stop_frame=STOP_FRAME,
+            frame_stride=FRAME_STRIDE,
+            n_bins=N_BINS,
+            r_max_nm=common_r_max_nm,
+            coordinates_in_angstrom=(
+                XYZ_COORDINATES_IN_ANGSTROM
             ),
-            comments="",
+            progress_label=label,
         )
 
-        print(
-            f"RDF CSV saved to:\n{CSV_PATH.resolve()}"
-        )
+        result["label"] = label
+        result["box_length_nm"] = box_length_nm
+
+        all_results.append(result)
+
+        if result["g_r"].size > 0:
+            maximum_g_r = max(
+                maximum_g_r,
+                float(np.max(result["g_r"])),
+            )
+
+        # --------------------------------------------------------
+        # Save one CSV file for every trajectory
+        # --------------------------------------------------------
+
+        if SAVE_CSV:
+            csv_path = xyz_path.with_name(
+                f"{xyz_path.stem}_rdf.csv"
+            )
+
+            output_data = np.column_stack(
+                (
+                    result["r_nm"],
+                    result["g_r"],
+                    result["coordination_number"],
+                    result["pair_counts"],
+                )
+            )
+
+            np.savetxt(
+                csv_path,
+                output_data,
+                delimiter=",",
+                header=(
+                    "r_nm,"
+                    "g_r,"
+                    "coordination_number,"
+                    "pair_count"
+                ),
+                comments="",
+            )
+
+            print(
+                f"RDF CSV saved to:\n{csv_path.resolve()}"
+            )
 
     # ------------------------------------------------------------
-    # Plot RDF
+    # Plot all RDF curves
     # ------------------------------------------------------------
 
     fig, ax = plt.subplots(
         figsize=(11, 7)
     )
 
-    ax.plot(
-        r_nm,
-        g_r,
-        linewidth=2.0,
-        label=r"$g(r)$",
-    )
+    for result in all_results:
+        ax.plot(
+            result["r_nm"],
+            result["g_r"],
+            linewidth=2.0,
+            label=result["label"],
+        )
 
+    # Ideal-gas reference
     ax.axhline(
         1.0,
         linestyle="--",
@@ -666,6 +881,7 @@ def main():
         label="Uniform ideal-gas reference",
     )
 
+    # Position of the Lennard-Jones potential minimum
     lj_minimum_nm = (
         2.0**(1.0 / 6.0)
         * SIGMA_NM
@@ -675,9 +891,19 @@ def main():
         lj_minimum_nm,
         linestyle=":",
         linewidth=1.5,
-        label=(
-            r"$r_\mathrm{min}=2^{1/6}\sigma$"
-        ),
+        label=r"$r_\mathrm{min}=2^{1/6}\sigma$",
+    )
+
+    # Apply selected y-axis transformation
+    apply_y_axis_scale(
+        ax=ax,
+        scale_name=Y_AXIS_SCALE,
+        maximum_g_r=maximum_g_r,
+    )
+
+    ax.set_xlim(
+        0.0,
+        common_r_max_nm,
     )
 
     ax.set_xlabel(
@@ -689,14 +915,8 @@ def main():
     )
 
     ax.set_title(
-        "Radial Distribution Function of the "
-        "Lennard-Jones Trajectory",
+        "Comparison of Radial Distribution Functions",
         pad=15,
-    )
-
-    ax.tick_params(
-        axis="both",
-        labelsize=TICK_FONT_SIZE,
     )
 
     ax.grid(
@@ -708,15 +928,26 @@ def main():
 
     fig.tight_layout()
 
+    # ------------------------------------------------------------
+    # Save comparison plot
+    # ------------------------------------------------------------
+
     if SAVE_PLOT:
+        COMPARISON_PLOT_PATH.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
         fig.savefig(
-            PLOT_PATH,
+            COMPARISON_PLOT_PATH,
             dpi=300,
             bbox_inches="tight",
         )
 
+        print()
         print(
-            f"RDF plot saved to:\n{PLOT_PATH.resolve()}"
+            "RDF comparison plot saved to:\n"
+            f"{COMPARISON_PLOT_PATH.resolve()}"
         )
 
     plt.show()

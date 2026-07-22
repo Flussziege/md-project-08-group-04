@@ -10,59 +10,65 @@ from cluster_functions import read_xyz_trajectory
 
 
 # ================================================================
-#   E I N G A B E N
+#   I N P U T   P A R A M E T E R S
 # ================================================================
 
 XYZ_PATH = Path(
     r"C:\Users\morit\_Uni-FU\Semester 4\Molekueldynamik\md-project-08-group-04\results\2026-07-15_19-30-00-5K\my_simulation_pos-5K.xyz"
 )
 
-# Boxlänge der kubischen Simulationsbox in nm
+# Side length of the cubic simulation box in nm
 BOX_LENGTH_NM = 6.0
 
-# Lennard-Jones-Parameter in nm
+# Lennard-Jones parameter in nm
 SIGMA_NM = 0.34
 
-# 3: Winkel zwischen räumlichen Bindungsvektoren
-# 2: Nur x- und y-Komponenten verwenden
+# 3: Angles between three-dimensional bond vectors
+# 2: Use only the x and y components
 DIMENSION = 3
 
-# Ersten Teil der Simulation als Equilibrierungsphase verwerfen.
+# Discard the first part of the simulation as an equilibration phase.
 START_FRAME = 4000
 
-# None bedeutet: bis zum letzten Frame.
+# None means: continue to the final frame.
 STOP_FRAME = None
 
-# Nur jeden n-ten Frame verwenden.
+# Use only every nth frame.
 FRAME_STRIDE = 20
 
-# Anzahl der Winkelintervalle zwischen 0° und 180°.
+# Number of angular bins between 0° and 180°.
 N_ANGLE_BINS = 180
 
-# Nachbarn werden nur innerhalb dieses Radius betrachtet.
+# Neighbors are considered only within this radius.
 #
 # None:
-#   Der Radius wird automatisch als erstes Minimum der RDF nach
-#   dem ersten Maximum gewählt.
+#   The radius is automatically chosen as the first RDF minimum after
+#   the first maximum.
 #
-# Beispiel für einen festen Wert:
+# Example of a fixed value:
 #   NEIGHBOR_CUTOFF_NM = 0.52
 NEIGHBOR_CUTOFF_NM = None
 
-# Parameter für die RDF, falls der Nachbarradius automatisch
-# bestimmt werden soll.
+# RDF parameters used when the neighbor cutoff is determined
+# automatically.
 N_RDF_BINS = 300
 RDF_R_MAX_NM = None
 RDF_SMOOTHING_SIGMA_BINS = 2.0
 
-# Deine XYZ-Datei enthält Å-Koordinaten.
+# The XYZ file contains coordinates in angstroms.
 # 1 Å = 0.1 nm
 XYZ_COORDINATES_IN_ANGSTROM = True
 
-# Ausgabe speichern
+# Save output
 SAVE_CSV = True
 SAVE_PLOT = True
 SAVE_RDF_DIAGNOSTIC = True
+
+# Plot font sizes
+TITLE_FONTSIZE = 17
+AXIS_LABEL_FONTSIZE = 14
+TICK_LABEL_FONTSIZE = 12
+LEGEND_FONTSIZE = 11
 
 ANGLE_CSV_PATH = XYZ_PATH.with_name(
     f"{XYZ_PATH.stem}_relative_angle_probability.csv"
@@ -82,45 +88,45 @@ RDF_DIAGNOSTIC_PATH = XYZ_PATH.with_name(
 
 
 # ================================================================
-#   H I L F S F U N K T I O N E N
+#   H E L P E R   F U N C T I O N S
 # ================================================================
 
 
 def validate_positions(positions):
-    """Prüft die Form der Trajektorie."""
+    """Validate the shape of the trajectory array."""
     positions = np.asarray(positions, dtype=float)
 
     if positions.ndim != 3:
         raise ValueError(
-            "positions muss die Form "
+            "positions must have the shape "
             "(n_frames, n_particles, 3) besitzen."
         )
 
     if positions.shape[2] != 3:
         raise ValueError(
-            "Die letzte Dimension von positions muss 3 sein."
+            "The final dimension of positions must be 3."
         )
 
     if positions.shape[0] == 0:
-        raise ValueError("Es wurden keine Frames übergeben.")
+        raise ValueError("No frames were provided.")
 
     if positions.shape[1] < 3:
         raise ValueError(
-            "Für relative Winkel werden mindestens drei Teilchen benötigt."
+            "At least three particles are required for relative angles."
         )
 
     return positions
 
 
 def minimum_image(displacements, box_length):
-    """Wendet die Minimum-Image-Konvention an."""
+    """Apply the minimum-image convention."""
     return displacements - box_length * np.rint(
         displacements / box_length
     )
 
 
 # ================================================================
-#   R D F   F Ü R   N A C H B A R R A D I U S
+#   R D F   F O R   N E I G H B O R   C U T O F F
 # ================================================================
 
 
@@ -131,18 +137,18 @@ def calculate_rdf(
     r_max=None,
 ):
     """
-    Berechnet die radiale Verteilungsfunktion g(r).
+    Calculate the radial distribution function g(r).
 
-    Sie wird hier hauptsächlich verwendet, um das erste Minimum
-    nach dem ersten Peak und damit die erste Nachbarschale zu finden.
+    It is mainly used here to locate the first minimum
+    after the first peak and therefore the first coordination shell.
     """
     positions = validate_positions(positions)
 
     if box_length <= 0:
-        raise ValueError("box_length muss größer als null sein.")
+        raise ValueError("box_length must be greater than zero.")
 
     if n_bins < 10:
-        raise ValueError("n_bins sollte mindestens 10 sein.")
+        raise ValueError("n_bins should be at least 10.")
 
     n_frames, n_particles, _ = positions.shape
 
@@ -151,7 +157,7 @@ def calculate_rdf(
 
     if not 0 < r_max <= box_length / 2.0:
         raise ValueError(
-            "r_max muss größer als null und höchstens L/2 sein."
+            "r_max must be greater than zero and no larger than L/2."
         )
 
     bin_edges = np.linspace(0.0, r_max, n_bins + 1)
@@ -185,7 +191,7 @@ def calculate_rdf(
 
         if frame_index % 100 == 0 or frame_index == n_frames - 1:
             print(
-                f"RDF: Frame {frame_index + 1} von {n_frames}"
+                f"RDF: frame {frame_index + 1} of {n_frames}"
             )
 
     box_volume = box_length**3
@@ -221,19 +227,19 @@ def determine_first_shell_cutoff(
     smoothing_sigma_bins=2.0,
 ):
     """
-    Bestimmt das erste RDF-Minimum nach dem ersten RDF-Maximum.
+    Determine the first RDF minimum after the first RDF maximum.
 
-    Die Suche wird auf den physikalisch relevanten Bereich um die
-    erste Lennard-Jones-Nachbarschale beschränkt.
+    The search is restricted to the physically relevant region around
+    the first Lennard-Jones coordination shell.
     """
     r_nm = np.asarray(r_nm, dtype=float)
     g_r = np.asarray(g_r, dtype=float)
 
     if r_nm.shape != g_r.shape:
-        raise ValueError("r_nm und g_r müssen dieselbe Form besitzen.")
+        raise ValueError("r_nm and g_r must have the same shape.")
 
     if sigma_nm <= 0:
-        raise ValueError("sigma_nm muss größer als null sein.")
+        raise ValueError("sigma_nm must be greater than zero.")
 
     smoothed_g_r = gaussian_filter1d(
         g_r,
@@ -241,7 +247,7 @@ def determine_first_shell_cutoff(
         mode="nearest",
     )
 
-    # Erster Peak ungefähr um r_min = 2^(1/6) sigma.
+    # The first peak is expected near r_min = 2^(1/6) sigma.
     peak_search_mask = (
         (r_nm >= 0.85 * sigma_nm)
         & (r_nm <= 1.65 * sigma_nm)
@@ -250,14 +256,14 @@ def determine_first_shell_cutoff(
     peak_indices = np.flatnonzero(peak_search_mask)
     if peak_indices.size == 0:
         raise RuntimeError(
-            "Kein gültiger Suchbereich für den ersten RDF-Peak."
+            "No valid search region for the first RDF peak."
         )
 
     first_peak_index = peak_indices[
         np.argmax(smoothed_g_r[peak_indices])
     ]
 
-    # Lokale Minima nach dem Peak suchen.
+    # Search for local minima after the peak.
     minimum_candidates, _ = find_peaks(-smoothed_g_r)
     minimum_candidates = minimum_candidates[
         (minimum_candidates > first_peak_index)
@@ -267,7 +273,7 @@ def determine_first_shell_cutoff(
     if minimum_candidates.size > 0:
         first_minimum_index = minimum_candidates[0]
     else:
-        # Robuster Fallback: kleinstes g(r) in einem Bereich nach dem Peak.
+        # Robust fallback: smallest g(r) in a region after the peak.
         fallback_mask = (
             (r_nm > r_nm[first_peak_index])
             & (r_nm <= 2.0 * sigma_nm)
@@ -277,8 +283,8 @@ def determine_first_shell_cutoff(
         if fallback_indices.size == 0:
             fallback_cutoff = 1.5 * sigma_nm
             print(
-                "WARNUNG: Erstes RDF-Minimum konnte nicht bestimmt "
-                f"werden. Verwende {fallback_cutoff:.4f} nm."
+                "WARNING: The first RDF minimum could not be determined. "
+                f"Using {fallback_cutoff:.4f} nm."
             )
             return (
                 fallback_cutoff,
@@ -302,7 +308,7 @@ def determine_first_shell_cutoff(
 
 
 # ================================================================
-#   R E L A T I V E   W I N K E L V E R T E I L U N G
+#   R E L A T I V E   A N G L E   D I S T R I B U T I O N
 # ================================================================
 
 
@@ -314,55 +320,55 @@ def calculate_relative_angle_probability(
     dimension=3,
 ):
     """
-    Berechnet die Verteilung der Winkel zwischen zwei Nachbarbindungen.
+    Calculate the distribution of angles between two neighbor bonds.
 
-    Für ein Zentralteilchen i und zwei Nachbarn j und k wird berechnet:
+    For a central particle i and two neighbors j and k, calculate:
 
         theta_jik = arccos(
             r_ij dot r_ik / (|r_ij| |r_ik|)
         )
 
-    Es werden alle ungeordneten Nachbarpaare j < k gezählt.
+    All unordered neighbor pairs j < k are counted.
 
     Parameters
     ----------
     positions : np.ndarray
-        Form (n_frames, n_particles, 3).
+        Shape (n_frames, n_particles, 3).
 
     box_length : float
-        Länge der periodischen kubischen Box.
+        Side length of the periodic cubic box.
 
     neighbor_cutoff : float
-        Maximaler Abstand eines Nachbarn vom Zentralteilchen.
-        Typischerweise das erste Minimum der RDF.
+        Maximum distance of a neighbor from the central particle.
+        Typically the first minimum of the RDF.
 
     n_angle_bins : int
-        Zahl der Winkelintervalle von 0° bis 180°.
+        Number of angular bins from 0° to 180°.
 
     dimension : int
-        3 für räumliche Winkel, 2 für eine Analyse nur in der xy-Ebene.
+        3 for three-dimensional angles, 2 for an analysis in the xy plane.
 
     Returns
     -------
     angle_centers_deg : np.ndarray
-        Mittelpunkte der Winkelintervalle.
+        Centers of the angular bins.
 
     probability_density_per_degree : np.ndarray
-        Normierte Aufenthaltswahrscheinlichkeitsdichte P(theta).
-        Das Integral von 0° bis 180° ist ungefähr 1.
+        Normalized probability density P(theta).
+        The integral from 0° to 180° is approximately 1.
 
     isotropic_density_per_degree : np.ndarray
-        Erwartete Referenzdichte für zufällig orientierte Bindungen.
+        Expected reference density for randomly oriented bonds.
 
     angular_correlation : np.ndarray
-        P(theta) geteilt durch die isotrope Referenz.
-        Ein Wert von 1 entspricht einer isotropen Verteilung.
+        P(theta) divided by the isotropic reference.
+        A value of 1 corresponds to an isotropic distribution.
 
     angle_histogram : np.ndarray
-        Absolute Zahl der Winkel pro Intervall.
+        Absolute number of angles per bin.
 
     mean_coordination_number : float
-        Mittlere Zahl von Nachbarn innerhalb des Cutoffs.
+        Mean number of neighbors within the cutoff.
     """
     positions = validate_positions(positions)
 
@@ -370,15 +376,15 @@ def calculate_relative_angle_probability(
         raise ValueError("dimension muss 2 oder 3 sein.")
 
     if box_length <= 0:
-        raise ValueError("box_length muss größer als null sein.")
+        raise ValueError("box_length must be greater than zero.")
 
     if not 0 < neighbor_cutoff <= box_length / 2.0:
         raise ValueError(
-            "neighbor_cutoff muss größer als null und höchstens L/2 sein."
+            "neighbor_cutoff must be greater than zero and no larger than L/2."
         )
 
     if n_angle_bins < 1:
-        raise ValueError("n_angle_bins muss mindestens 1 sein.")
+        raise ValueError("n_angle_bins must be at least 1.")
 
     n_frames, n_particles, _ = positions.shape
 
@@ -401,7 +407,7 @@ def calculate_relative_angle_probability(
         )
 
         for central_index, neighbor_indices in enumerate(neighbor_lists):
-            # Der KD-Tree enthält das Zentralteilchen selbst.
+            # The KD-tree includes the central particle itself.
             neighbor_indices = np.asarray(
                 [
                     index
@@ -414,7 +420,7 @@ def calculate_relative_angle_probability(
             number_of_neighbors = neighbor_indices.size
             coordination_sum += number_of_neighbors
 
-            # Für einen Winkel werden mindestens zwei Nachbarn benötigt.
+            # At least two neighbors are required to define an angle.
             if number_of_neighbors < 2:
                 continue
 
@@ -476,14 +482,14 @@ def calculate_relative_angle_probability(
 
         if frame_index % 100 == 0 or frame_index == n_frames - 1:
             print(
-                f"Winkel: Frame {frame_index + 1} von {n_frames}"
+                f"Angles: frame {frame_index + 1} of {n_frames}"
             )
 
     total_angle_count = int(angle_histogram.sum())
     if total_angle_count == 0:
         raise RuntimeError(
-            "Es wurden keine Winkel gefunden. "
-            "Prüfe den Nachbarradius und die ausgewählten Frames."
+            "No angles were found. "
+            "Check the neighbor cutoff and the selected frames."
         )
 
     bin_widths_deg = np.diff(angle_edges_deg)
@@ -495,17 +501,17 @@ def calculate_relative_angle_probability(
     angle_edges_rad = np.radians(angle_edges_deg)
 
     if dimension == 3:
-        # Für zwei unabhängige, isotrope 3D-Richtungen gilt
+        # For two independent isotropic 3D directions:
         # p(theta) = 1/2 sin(theta), 0 <= theta <= pi.
-        # Hier wird die exakte Wahrscheinlichkeit pro Histogrammbin
-        # integriert und danach wieder durch die Binbreite geteilt.
+        # Here, the exact probability per histogram bin is
+        # integrated and then divided by the bin width.
         isotropic_probability_per_bin = 0.5 * (
             np.cos(angle_edges_rad[:-1])
             - np.cos(angle_edges_rad[1:])
         )
     else:
-        # In 2D ist der gefaltete relative Winkel auf [0, pi]
-        # für zufällige Richtungen gleichverteilt.
+        # In 2D, the folded relative angle on [0, pi]
+        # is uniformly distributed for random directions.
         isotropic_probability_per_bin = (
             bin_widths_deg / 180.0
         )
@@ -536,12 +542,12 @@ def calculate_relative_angle_probability(
 
 
 # ================================================================
-#   X Y Z   E I N L E S E N
+#   R E A D   X Y Z   T R A J E C T O R Y
 # ================================================================
 
 positions, atom_names = read_xyz_trajectory(XYZ_PATH)
 
-print(f"Gesamte Trajektorie: {positions.shape}")
+print(f"Complete trajectory: {positions.shape}")
 
 if XYZ_COORDINATES_IN_ANGSTROM:
     positions = positions * 0.1
@@ -552,22 +558,22 @@ selected_positions = positions[
 
 if selected_positions.shape[0] == 0:
     raise ValueError(
-        "Die Frame-Auswahl ist leer. Prüfe START_FRAME, "
+        "The frame selection is empty. Check START_FRAME, "
         "STOP_FRAME und FRAME_STRIDE."
     )
 
 print(
-    f"Für die Analyse verwendete Frames: "
+    f"Frames used for the analysis: "
     f"{selected_positions.shape[0]}"
 )
 print(
-    f"Teilchen pro Frame: "
+    f"Particles per frame: "
     f"{selected_positions.shape[1]}"
 )
 
 
 # ================================================================
-#   N A C H B A R R A D I U S   B E S T I M M E N
+#   D E T E R M I N E   N E I G H B O R   C U T O F F
 # ================================================================
 
 if NEIGHBOR_CUTOFF_NM is None:
@@ -591,8 +597,8 @@ if NEIGHBOR_CUTOFF_NM is None:
     )
 
     print(
-        "Automatisch bestimmter Nachbarradius "
-        f"(erstes RDF-Minimum): {neighbor_cutoff_nm:.5f} nm"
+        "Automatically determined neighbor cutoff "
+        f"(first RDF minimum): {neighbor_cutoff_nm:.5f} nm"
     )
 
     if SAVE_RDF_DIAGNOSTIC:
@@ -602,25 +608,26 @@ if NEIGHBOR_CUTOFF_NM is None:
             r_nm,
             smoothed_g_r,
             linewidth=1.5,
-            label="geglättete RDF",
+            label="smoothed RDF",
         )
         plt.axvline(
             r_nm[first_peak_index],
             linestyle=":",
             linewidth=1.2,
-            label="erster Peak",
+            label="first peak",
         )
         plt.axvline(
             neighbor_cutoff_nm,
             linestyle="--",
             linewidth=1.2,
-            label="Nachbarradius: erstes Minimum",
+            label="neighbor cutoff: first minimum",
         )
-        plt.xlabel("Abstand r / nm")
-        plt.ylabel(r"radiale Verteilungsfunktion $g(r)$")
-        plt.title("Bestimmung der ersten Nachbarschale")
+        plt.xlabel(r"distance $r$ / nm", fontsize=AXIS_LABEL_FONTSIZE)
+        plt.ylabel(r"radial distribution function $g(r)$", fontsize=AXIS_LABEL_FONTSIZE)
+        plt.title("Determination of the First Coordination Shell", fontsize=TITLE_FONTSIZE, pad=12)
         plt.grid(True)
-        plt.legend()
+        plt.tick_params(axis="both", labelsize=TICK_LABEL_FONTSIZE)
+        plt.legend(fontsize=LEGEND_FONTSIZE)
         plt.tight_layout()
         plt.savefig(
             RDF_DIAGNOSTIC_PATH,
@@ -629,19 +636,19 @@ if NEIGHBOR_CUTOFF_NM is None:
         )
         plt.close()
         print(
-            "RDF-Diagnose gespeichert unter: "
+            "RDF diagnostic saved to: "
             f"{RDF_DIAGNOSTIC_PATH}"
         )
 else:
     neighbor_cutoff_nm = float(NEIGHBOR_CUTOFF_NM)
     print(
-        "Manuell gesetzter Nachbarradius: "
+        "Manually specified neighbor cutoff: "
         f"{neighbor_cutoff_nm:.5f} nm"
     )
 
 
 # ================================================================
-#   R E L A T I V E   W I N K E L   B E R E C H N E N
+#   C A L C U L A T E   R E L A T I V E   A N G L E S
 # ================================================================
 
 (
@@ -659,15 +666,15 @@ else:
     dimension=DIMENSION,
 )
 
-print(f"Gezählte relative Winkel: {angle_counts.sum()}")
+print(f"Counted relative angles: {angle_counts.sum()}")
 print(
-    "Mittlere Koordinationszahl innerhalb des Cutoffs: "
+    "Mean coordination number within the cutoff: "
     f"{mean_coordination_number:.3f}"
 )
 
 
 # ================================================================
-#   C S V   S P E I C H E R N
+#   S A V E   C S V
 # ================================================================
 
 if SAVE_CSV:
@@ -696,13 +703,13 @@ if SAVE_CSV:
     )
 
     print(
-        "Winkel-CSV gespeichert unter: "
+        "Angle CSV saved to: "
         f"{ANGLE_CSV_PATH}"
     )
 
 
 # ================================================================
-#   W I N K E L V E R T E I L U N G   P L O T T E N
+#   P L O T   A N G L E   D I S T R I B U T I O N
 # ================================================================
 
 plt.figure(figsize=(9, 6))
@@ -710,7 +717,7 @@ plt.plot(
     angle_deg,
     probability_density,
     linewidth=1.5,
-    label=r"gemessene $P(\theta)$",
+    label=r"measured $P(\theta)$",
 )
 plt.plot(
     angle_deg,
@@ -718,9 +725,9 @@ plt.plot(
     linestyle="--",
     linewidth=1.2,
     label=(
-        r"isotrope Referenz $P_0(\theta)$"
+        r"isotropic reference $P_0(\theta)$"
         if DIMENSION == 3
-        else "gleichverteilte 2D-Referenz"
+        else "uniform 2D reference"
     ),
 )
 
@@ -732,15 +739,18 @@ for reference_angle in (60.0, 90.0, 120.0, 180.0):
         alpha=0.5,
     )
 
-plt.xlabel(r"relativer Winkel $\theta$ / Grad")
-plt.ylabel(r"Wahrscheinlichkeitsdichte $P(\theta)$ / Grad$^{-1}$")
+plt.xlabel(r"relative angle $\theta$ / degrees", fontsize=AXIS_LABEL_FONTSIZE)
+plt.ylabel(r"probability density $P(\theta)$ / degree$^{-1}$", fontsize=AXIS_LABEL_FONTSIZE)
 plt.title(
-    "Relative Winkelverteilung der ersten Nachbarschale\n"
-    f"Nachbarradius = {neighbor_cutoff_nm:.4f} nm"
+    "Relative Angle Distribution in the First Coordination Shell\n"
+    f"Neighbor cutoff = {neighbor_cutoff_nm:.4f} nm",
+    fontsize=TITLE_FONTSIZE,
+    pad=12,
 )
 plt.xlim(0.0, 180.0)
 plt.grid(True)
-plt.legend()
+plt.tick_params(axis="both", labelsize=TICK_LABEL_FONTSIZE)
+plt.legend(fontsize=LEGEND_FONTSIZE)
 plt.tight_layout()
 
 if SAVE_PLOT:
@@ -750,7 +760,7 @@ if SAVE_PLOT:
         bbox_inches="tight",
     )
     print(
-        "Winkelverteilungs-Plot gespeichert unter: "
+        "Angle-distribution plot saved to: "
         f"{ANGLE_PLOT_PATH}"
     )
 
@@ -758,7 +768,7 @@ plt.show()
 
 
 # ================================================================
-#   I S O T R O P I E - K O R R I G I E R T E   V E R T E I L U N G
+#   I S O T R O P Y - C O R R E C T E D   D I S T R I B U T I O N
 # ================================================================
 
 plt.figure(figsize=(9, 6))
@@ -772,7 +782,7 @@ plt.axhline(
     1.0,
     linestyle="--",
     linewidth=1.0,
-    label="isotrope Referenz",
+    label="isotropic reference",
 )
 
 for reference_angle in (60.0, 90.0, 120.0, 180.0):
@@ -783,15 +793,17 @@ for reference_angle in (60.0, 90.0, 120.0, 180.0):
         alpha=0.5,
     )
 
-plt.xlabel(r"relativer Winkel $\theta$ / Grad")
-plt.ylabel(r"Winkelkorrelation $g_\theta(\theta)$")
+plt.xlabel(r"relative angle $\theta$ / degrees", fontsize=AXIS_LABEL_FONTSIZE)
+plt.ylabel(r"angular correlation $g_\theta(\theta)$", fontsize=AXIS_LABEL_FONTSIZE)
 plt.title(
-    "Isotropie-korrigierte relative Winkelverteilung\n"
-    f"Nachbarradius = {neighbor_cutoff_nm:.4f} nm"
+    f"Isotropy-Corrected Relative Angle Distribution\n",
+    fontsize=TITLE_FONTSIZE,
+    pad=12,
 )
 plt.xlim(0.0, 180.0)
 plt.grid(True)
-plt.legend()
+plt.tick_params(axis="both", labelsize=TICK_LABEL_FONTSIZE)
+plt.legend(fontsize=LEGEND_FONTSIZE)
 plt.tight_layout()
 
 if SAVE_PLOT:
@@ -801,7 +813,7 @@ if SAVE_PLOT:
         bbox_inches="tight",
     )
     print(
-        "Winkelkorrelations-Plot gespeichert unter: "
+        "Angular-correlation plot saved to: "
         f"{ANGULAR_CORRELATION_PLOT_PATH}"
     )
 
