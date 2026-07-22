@@ -150,7 +150,7 @@ XYZ_PATH = (
     / "moldyn_proj"
     / "md-project"
     / "results"
-    / "Long_sim_300"
+    / "Long_sim"
     / "my_simulation_pos.xyz"
 )
 # ================================================================

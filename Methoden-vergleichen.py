@@ -40,22 +40,60 @@ base_args = {
     "rij_min": 1e-2,
 
     "NVT": True,
-    "seed": 67,
-    "max_steps": 6000,
+    "seed": 420,
+    "max_steps": 100000,
 }
-
 methods = [
     {
-        "label": "CD with Armijo & recy. alpha, decr. 100k",
+        "label": "CD with Armijo & recy. alpha, decr. - 100k",
         "SD": False,
         "recoursive_alpha": True,
         "alpha_method": "amijo",
-        "rec_alpha_value": 2.0,
+        "rec_alpha_value": 18.0,´
         "alpha_new_idea": True,
     },
-
 ]
 
+
+
+
+"""
+
+methods = [
+    {
+        "label": "SD",
+        "SD": True,
+        "recoursive_alpha": True,
+        "alpha_method": "line_search",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },
+        {
+        "label": "CD with Armijo",
+        "SD": False,
+        "recoursive_alpha": False,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.0,
+        "alpha_new_idea": False,
+    },    
+    {
+        "label": "CD with Armijo & recy. alpha",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.8,
+        "alpha_new_idea": False,
+    },
+    {
+        "label": "CD with Armijo & recy. alpha, decr.",
+        "SD": False,
+        "recoursive_alpha": True,
+        "alpha_method": "amijo",
+        "rec_alpha_value": 2.8,
+        "alpha_new_idea": True,
+    },
+]
+"""
 """
 ==================================================
 12
