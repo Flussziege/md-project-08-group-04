@@ -214,7 +214,6 @@ write_minimization_result_to_csv(str(filename), result)
 #   
 #----------------------------------------------------------------
 
-
 # set initial velocities     
 initialize_velocities(ps, sim.temperature)
 
